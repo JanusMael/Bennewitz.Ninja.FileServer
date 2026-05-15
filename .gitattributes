@@ -1,0 +1,28 @@
+# Normalize line endings on commit; check out as-is on Windows, LF on Linux/macOS
+* text=auto
+
+# Force LF for files that are sensitive to line endings
+*.cs        text eol=lf
+*.cshtml    text eol=lf
+*.json      text eol=lf
+*.props     text eol=lf
+*.csproj    text eol=lf
+*.sln       text eol=lf
+*.sh        text eol=lf
+*.yml       text eol=lf
+Dockerfile* text eol=lf
+*.xml       text eol=lf
+*.css       text eol=lf
+*.js        text eol=lf
+*.md        text eol=lf
+Dockerfile  text eol=lf
+.gitignore  text eol=lf
+.gitattributes text eol=lf
+LICENSE     text eol=lf
+
+# Treat binaries as binary (no line ending conversion, no diff)
+*.ico       binary
+*.png       binary
+*.jpg       binary
+*.gif       binary
+*.map       binary

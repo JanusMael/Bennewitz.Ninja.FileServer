@@ -1,0 +1,23 @@
+@page
+@model ErrorModel
+@{
+    ViewData["Title"] = "Error";
+}
+
+<h1 class="text-danger">Something went wrong.</h1>
+<p>An unexpected error occurred while processing your request. Please try again.</p>
+
+@if (Model.ShowRequestId)
+{
+    <p class="text-muted">
+        <small>Request ID: <code>@Model.RequestId</code></small>
+    </p>
+}
+
+<p>
+    If this keeps happening, contact your administrator.
+    @if (Model.ShowRequestId)
+    {
+        <span>Include the Request ID above to help diagnose the issue.</span>
+    }
+</p>

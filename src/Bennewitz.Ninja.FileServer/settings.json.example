@@ -1,0 +1,6 @@
+{
+  "ServedFilesRoot": "/path/to/your/files",
+  "ServedFilesRoute": "files",
+  "HttpPort": 5550,
+  "HttpsPort": 5551
+}

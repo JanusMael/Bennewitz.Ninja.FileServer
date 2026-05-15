@@ -1,0 +1,54 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
+        <!-- Suppress IIS web.config generation — this app is not deployed to IIS. -->
+        <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+      <DocumentationFile>bin\Release\Bennewitz.Ninja.FileServer.xml</DocumentationFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Content Update="settings.json">
+        <DependentUpon>Settings.cs</DependentUpon>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </Content>
+      <!-- appsettings files are not used by this app (config lives in settings.json). -->
+      <Content Update="appsettings.json">
+        <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+      </Content>
+      <Content Update="appsettings.Development.json">
+        <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+      </Content>
+      <!-- Embed wwwroot into the assembly so no wwwroot/ folder is required at runtime. -->
+      <Content Remove="wwwroot\**" />
+      <EmbeddedResource Include="wwwroot\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Markdig" Version="0.40.*" />
+      <!--
+        Build-only reference: provides the MSBuild targets that generate the embedded file
+        manifest (Microsoft.Extensions.FileProviders.Embedded.Manifest.xml) at build time.
+        The runtime type (ManifestEmbeddedFileProvider) comes from the shared framework.
+      -->
+      <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="10.*">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>build</IncludeAssets>
+      </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Bennewitz.Ninja.AutoVersioning" Version="2026.2.501">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
+    </ItemGroup>
+
+</Project>

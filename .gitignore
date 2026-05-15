@@ -1,0 +1,21 @@
+# Build outputs
+**/bin/
+**/obj/
+build.binlog
+
+# User-specific IDE files
+*.sln.DotSettings.user
+.vs/
+
+# JetBrains Rider
+/.idea/
+/.run/
+
+# Local configuration — contains machine-specific paths; not for source control
+src/**/settings.json
+
+# Claude Code local session data
+.claude/
+
+# Publish output
+/publish/dist/

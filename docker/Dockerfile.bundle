@@ -1,0 +1,43 @@
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
+WORKDIR /app
+EXPOSE 5550
+EXPOSE 5551
+# curl is used by the HEALTHCHECK; install it explicitly since the aspnet slim image omits it.
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
+# Content is baked in from the ./FilesRoot directory at build time.
+# No volume mount is needed for the files — just run:
+#
+#   docker run -p 5550:5550 <image>
+#
+# Optional overrides still work:
+#   -e FILE_SERVER_ROUTE=files             (default: files)
+#   -e FILE_SERVER_HTTP_PORT=8080
+#
+#   HTTPS:
+#     -e FILE_SERVER_CERT_PATH=/certs/server.pfx \
+#     -e FILE_SERVER_CERT_PASSWORD=yourpassword \
+#     -v /host/certs:/certs:ro -p 5551:5551
+
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+COPY ["src/Bennewitz.Ninja.FileServer/Bennewitz.Ninja.FileServer.csproj", "src/Bennewitz.Ninja.FileServer/"]
+RUN dotnet restore "src/Bennewitz.Ninja.FileServer/Bennewitz.Ninja.FileServer.csproj"
+COPY . .
+WORKDIR "/src/"
+RUN dotnet build "src/Bennewitz.Ninja.FileServer/Bennewitz.Ninja.FileServer.csproj" -c Release -o /app/build
+
+FROM build AS publish
+WORKDIR /src
+RUN dotnet publish "src/Bennewitz.Ninja.FileServer/Bennewitz.Ninja.FileServer.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+FROM base AS final
+WORKDIR /app
+# Run as unprivileged user — the app is read-only and needs no home directory
+RUN adduser --disabled-password --no-create-home appuser
+USER appuser
+COPY --from=publish /app/publish .
+COPY FilesRoot/ /data/
+ENV FILE_SERVER_ROOT=/data
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -sf http://localhost:5550/ || exit 1
+ENTRYPOINT ["dotnet", "Bennewitz.Ninja.FileServer.dll"]

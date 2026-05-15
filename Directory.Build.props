@@ -1,0 +1,31 @@
+<Project>
+  <!--
+    Drop this in your solution root as `Directory.Build.props` to apply it globally (or patch your existing one to include these properties).
+    This will ensure that all projects in the solution have the necessary MSBuild properties to work with the source generator,
+    without needing to modify each project file individually.
+  -->
+  <PropertyGroup>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Embedded PDBs are bundled into the assembly itself; no separate .pdb file is produced.
+         With PublishSingleFile=true this means symbols travel inside the single executable. -->
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Turn the generator ON for the consuming projects -->
+    <GenerateAutoVersionedAssemblyInfo>true</GenerateAutoVersionedAssemblyInfo>
+
+    <!-- Set these to your company and product names; consumed by the source generator at build time -->
+    <AssemblyCompany>Bennewitz.Ninja</AssemblyCompany>
+    <AssemblyProduct>FileServer</AssemblyProduct>
+
+    <!-- Map CI environment variables to the MSBuild properties the generator reads.
+         Replace $(GITHUB_SHA) / $(GITHUB_ACTIONS) with your CI provider's equivalents,
+         e.g. GitLab: $(CI_COMMIT_SHA) / $(GITLAB_CI), Bitbucket: $(BITBUCKET_COMMIT) / $(CI). -->
+    <CommitSha Condition="'$(CommitSha)' == ''">$(GITHUB_SHA)</CommitSha>
+    <IsContinuousIntegration>$(GITHUB_ACTIONS)</IsContinuousIntegration>
+  </PropertyGroup>
+  <!-- CompilerVisibleProperty declarations are provided by the NuGet package's Build.props
+       auto-import. Redeclaring them here causes duplicate build_property.* entries in the
+       generated editorconfig and makes MSBuild analysis output confusing. -->
+</Project>

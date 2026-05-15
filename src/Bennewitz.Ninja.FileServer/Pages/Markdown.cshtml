@@ -1,0 +1,64 @@
+@page "/view"
+@model MarkdownModel
+@{
+    ViewData["Title"] = Model.FileName;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/github-markdown.min.css" asp-append-version="true"/>
+}
+
+<div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+    <nav aria-label="breadcrumb" class="mb-0">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item">
+                <a href="/@Settings.ServedFilesRoute">@Settings.ServedFilesRoute</a>
+            </li>
+            @{
+                var parts = Model.BreadcrumbParts;
+                for (var i = 0; i < parts.Length - 1; i++)
+                {
+                    var href = "/" + Settings.ServedFilesRoute + "/" +
+                               string.Join("/", parts[..(i + 1)].Select(Uri.EscapeDataString));
+                    <li class="breadcrumb-item"><a href="@href">@parts[i]</a></li>
+                }
+                <li class="breadcrumb-item active" aria-current="page">@parts[^1]</li>
+            }
+        </ol>
+    </nav>
+    <div class="d-flex gap-2">
+        <a href="@Model.RawUrl" class="btn btn-sm btn-outline-secondary">View raw</a>
+        <a href="@Model.RawUrl" download="@Model.FileName" class="btn btn-sm btn-outline-secondary">Download</a>
+        <button id="md-theme-btn" type="button" class="btn btn-sm btn-outline-secondary">Auto</button>
+    </div>
+</div>
+
+<div id="md-content" class="markdown-body px-3 pt-2">
+    @Model.RenderedContent
+</div>
+
+@section Scripts {
+<script>
+(function () {
+    var KEY    = 'md-color-scheme';
+    var states = ['auto', 'light', 'dark'];
+    var labels = { auto: 'Auto', light: 'Light', dark: 'Dark' };
+    var el     = document.getElementById('md-content');
+    var btn    = document.getElementById('md-theme-btn');
+    var cur    = localStorage.getItem(KEY) || 'auto';
+
+    function apply(state) {
+        if (state === 'auto') el.removeAttribute('data-md-theme');
+        else                  el.setAttribute('data-md-theme', state);
+        btn.textContent = labels[state];
+        localStorage.setItem(KEY, state);
+        cur = state;
+    }
+
+    apply(cur);
+    btn.addEventListener('click', function () {
+        apply(states[(states.indexOf(cur) + 1) % states.length]);
+    });
+}());
+</script>
+}

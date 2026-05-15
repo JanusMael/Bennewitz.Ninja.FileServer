@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bennewitz.Ninja.FileServer", "src/Bennewitz.Ninja.FileServer/Bennewitz.Ninja.FileServer.csproj", "{84D5FC4F-5A15-4BCA-B2AE-A614AB98751C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{EC596755-1384-422F-A3C4-926056851B81}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "publish", "publish", "{0C7EADFB-F33B-4E41-905C-601341A31E8D}"
+	ProjectSection(SolutionItems) = preProject
+		publish\publish.ps1 = publish\publish.ps1
+		publish\publish-linux-arm64.ps1 = publish\publish-linux-arm64.ps1
+		publish\publish-linux-x64.ps1 = publish\publish-linux-x64.ps1
+		publish\publish-osx-arm64.ps1 = publish\publish-osx-arm64.ps1
+		publish\publish-osx-x64.ps1 = publish\publish-osx-x64.ps1
+		publish\Publish-Rid.ps1 = publish\Publish-Rid.ps1
+		publish\publish-win-arm64.ps1 = publish\publish-win-arm64.ps1
+		publish\publish-win-x64.ps1 = publish\publish-win-x64.ps1
+		publish\Smoke-Test.ps1 = publish\Smoke-Test.ps1
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{84D5FC4F-5A15-4BCA-B2AE-A614AB98751C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{84D5FC4F-5A15-4BCA-B2AE-A614AB98751C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{84D5FC4F-5A15-4BCA-B2AE-A614AB98751C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{84D5FC4F-5A15-4BCA-B2AE-A614AB98751C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{0C7EADFB-F33B-4E41-905C-601341A31E8D} = {EC596755-1384-422F-A3C4-926056851B81}
+	EndGlobalSection
+EndGlobal
