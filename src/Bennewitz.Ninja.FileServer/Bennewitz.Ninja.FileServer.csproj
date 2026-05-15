@@ -45,7 +45,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Bennewitz.Ninja.AutoVersioning" Version="2026.2.501">
+      <PackageReference Include="Bennewitz.Ninja.AutoVersioning" Version="2026.2.515">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
