@@ -166,3 +166,7 @@ if ($results.Count -gt 0) {
 else {
     Write-Host "`nNo RIDs were built." -ForegroundColor DarkYellow
 }
+
+# Exit non-zero if any RID failed so CI sees the failure.
+$failCount = ($results | Where-Object { $_.ExitCode -ne 0 }).Count
+if ($failCount -gt 0) { exit $failCount }
