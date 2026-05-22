@@ -32,20 +32,20 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Markdig" Version="0.40.*" />
+      <PackageReference Include="Markdig" Version="1.2.0" />
       <!--
         Build-only reference: provides the MSBuild targets that generate the embedded file
         manifest (Microsoft.Extensions.FileProviders.Embedded.Manifest.xml) at build time.
         The runtime type (ManifestEmbeddedFileProvider) comes from the shared framework.
       -->
-      <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="10.*">
+      <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="10.0.8">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>build</IncludeAssets>
       </PackageReference>
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Bennewitz.Ninja.AutoVersioning" Version="2026.2.521">
+      <PackageReference Include="Bennewitz.Ninja.AutoVersioning" Version="2026.2.522">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
