@@ -1,54 +1,70 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Razor">
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+
+        <!--
+          The assembly name differs from the package id on purpose: the CLI executable keeps
+          `Bennewitz.Ninja.FileServer`, and two assemblies cannot share a name in one output
+          folder. PackageId is set in the packaging section; RootNamespace stays put so
+          consumers still write `using Bennewitz.Ninja.FileServer;`.
+        -->
+        <AssemblyName>Bennewitz.Ninja.FileServer.Hosting</AssemblyName>
+        <RootNamespace>Bennewitz.Ninja.FileServer</RootNamespace>
+
+        <!-- Sdk.Razor targets Razor Components by default and will not compile MVC .cshtml
+             views without this. Verified the hard way during the Phase 0 spike. -->
+        <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+
+        <!-- Assets ship as embedded resources served from an endpoint, never as RCL static
+             web assets, so the static-web-assets pipeline is dead weight here. -->
+        <StaticWebAssetsEnabled>false</StaticWebAssetsEnabled>
+
+        <!-- Derives the XML filename from AssemblyName. A hardcoded DocumentationFile would
+             no longer match, and NuGet matches docs to $(AssemblyName).xml — consumers would
+             silently get no IntelliSense. -->
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
         <GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
-        <!-- Suppress IIS web.config generation — this app is not deployed to IIS. -->
-        <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
-    </PropertyGroup>
-
-    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-      <DocumentationFile>bin\Release\Bennewitz.Ninja.FileServer.xml</DocumentationFile>
     </PropertyGroup>
 
     <ItemGroup>
-      <Content Update="settings.json">
-        <DependentUpon>Settings.cs</DependentUpon>
-        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      </Content>
-      <!-- appsettings files are not used by this app (config lives in settings.json). -->
-      <Content Update="appsettings.json">
-        <CopyToPublishDirectory>Never</CopyToPublishDirectory>
-      </Content>
-      <Content Update="appsettings.Development.json">
-        <CopyToPublishDirectory>Never</CopyToPublishDirectory>
-      </Content>
-      <!-- Embed wwwroot into the assembly so no wwwroot/ folder is required at runtime. -->
-      <Content Remove="wwwroot\**" />
-      <EmbeddedResource Include="wwwroot\**" />
+        <!-- Sdk.Razor does not add the ASP.NET Core framework reference that Sdk.Web does. -->
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Markdig" Version="1.2.0" />
-      <!--
-        Build-only reference: provides the MSBuild targets that generate the embedded file
-        manifest (Microsoft.Extensions.FileProviders.Embedded.Manifest.xml) at build time.
-        The runtime type (ManifestEmbeddedFileProvider) comes from the shared framework.
-      -->
-      <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="10.0.8">
-        <PrivateAssets>all</PrivateAssets>
-        <IncludeAssets>build</IncludeAssets>
-      </PackageReference>
+        <!-- Temporary: the CLI still constructs the file providers directly. Removed once the
+             component owns that wiring and the CLI talks only to the public MapFileServer API. -->
+        <InternalsVisibleTo Include="Bennewitz.Ninja.FileServer" />
+        <InternalsVisibleTo Include="Bennewitz.Ninja.FileServer.Tests" />
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Bennewitz.Ninja.AutoVersioning" Version="2026.2.522">
-        <PrivateAssets>all</PrivateAssets>
-        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      </PackageReference>
+        <!-- Embed wwwroot into the assembly so no wwwroot/ folder is required at runtime. -->
+        <Content Remove="wwwroot\**" />
+        <EmbeddedResource Include="wwwroot\**" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!--
+          Build-only reference: provides the MSBuild targets that generate the embedded file
+          manifest (Microsoft.Extensions.FileProviders.Embedded.Manifest.xml) at build time.
+          The runtime type (ManifestEmbeddedFileProvider) comes from the shared framework.
+        -->
+        <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="10.0.8">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>build</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Bennewitz.Ninja.AutoVersioning" Version="2026.2.522">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
     </ItemGroup>
 
 </Project>

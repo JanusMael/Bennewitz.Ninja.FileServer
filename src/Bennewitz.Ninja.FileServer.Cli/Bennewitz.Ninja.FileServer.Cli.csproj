@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+
+        <!--
+          The executable keeps its original name. Only the project moved; the shipped binary,
+          Docker ENTRYPOINT, and release archives are unchanged. The library carries a
+          different assembly name (…​.Hosting) so the two can coexist in one output folder.
+        -->
+        <AssemblyName>Bennewitz.Ninja.FileServer</AssemblyName>
+        <RootNamespace>Bennewitz.Ninja.FileServer</RootNamespace>
+
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <!-- Suppress IIS web.config generation — this app is not deployed to IIS. -->
+        <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Bennewitz.Ninja.FileServer\Bennewitz.Ninja.FileServer.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Update="settings.json">
+            <DependentUpon>Settings.cs</DependentUpon>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </Content>
+        <!-- appsettings files are not used by this app (config lives in settings.json). -->
+        <Content Update="appsettings.json">
+            <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+        </Content>
+        <Content Update="appsettings.Development.json">
+            <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+        </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Markdig" Version="1.2.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Bennewitz.Ninja.AutoVersioning" Version="2026.2.522">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+</Project>
