@@ -21,8 +21,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bennewitz.Ninja.FileServer.Cli", "src\Bennewitz.Ninja.FileServer.Cli\Bennewitz.Ninja.FileServer.Cli.csproj", "{644CE9DC-DF45-4D80-A8DE-FE47BFCFB84C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bennewitz.Ninja.FileServer", "src\Bennewitz.Ninja.FileServer\Bennewitz.Ninja.FileServer.csproj", "{7D097022-11AC-439D-A636-7571E659CBDC}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -57,18 +55,6 @@ Global
 		{644CE9DC-DF45-4D80-A8DE-FE47BFCFB84C}.Release|x64.Build.0 = Release|Any CPU
 		{644CE9DC-DF45-4D80-A8DE-FE47BFCFB84C}.Release|x86.ActiveCfg = Release|Any CPU
 		{644CE9DC-DF45-4D80-A8DE-FE47BFCFB84C}.Release|x86.Build.0 = Release|Any CPU
-		{7D097022-11AC-439D-A636-7571E659CBDC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7D097022-11AC-439D-A636-7571E659CBDC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7D097022-11AC-439D-A636-7571E659CBDC}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{7D097022-11AC-439D-A636-7571E659CBDC}.Debug|x64.Build.0 = Debug|Any CPU
-		{7D097022-11AC-439D-A636-7571E659CBDC}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{7D097022-11AC-439D-A636-7571E659CBDC}.Debug|x86.Build.0 = Debug|Any CPU
-		{7D097022-11AC-439D-A636-7571E659CBDC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7D097022-11AC-439D-A636-7571E659CBDC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7D097022-11AC-439D-A636-7571E659CBDC}.Release|x64.ActiveCfg = Release|Any CPU
-		{7D097022-11AC-439D-A636-7571E659CBDC}.Release|x64.Build.0 = Release|Any CPU
-		{7D097022-11AC-439D-A636-7571E659CBDC}.Release|x86.ActiveCfg = Release|Any CPU
-		{7D097022-11AC-439D-A636-7571E659CBDC}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -76,6 +62,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{0C7EADFB-F33B-4E41-905C-601341A31E8D} = {EC596755-1384-422F-A3C4-926056851B81}
 		{644CE9DC-DF45-4D80-A8DE-FE47BFCFB84C} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
-		{7D097022-11AC-439D-A636-7571E659CBDC} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{84D5FC4F-5A15-4BCA-B2AE-A614AB98751C} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal
