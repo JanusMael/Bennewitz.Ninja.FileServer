@@ -1,0 +1,36 @@
+@model FileServerMarkdownViewModel
+@{
+    Layout = ViewData[RazorViewRenderer.LayoutKey] as string
+             ?? "/Views/FileServer/_FileServerLayout.cshtml";
+    ViewData["Title"] = Model.Title;
+}
+@* No @section declarations — see the note in Directory.cshtml. *@
+@if (Model.StylesheetUrl is not null)
+{
+    <link rel="stylesheet" href="@Model.StylesheetUrl"/>
+}
+@if (Model.MarkdownStylesheetUrl is not null)
+{
+    <link rel="stylesheet" href="@Model.MarkdownStylesheetUrl"/>
+}
+
+<div class="bnfs-root">
+    <div class="bnfs-header">
+        <ol class="bnfs-crumbs">
+            @foreach (var crumb in Model.Breadcrumbs)
+            {
+                <li><a href="@crumb.Url">@crumb.Name</a></li>
+            }
+            <li><span class="bnfs-current">@Model.FileName</span></li>
+        </ol>
+
+        <div class="bnfs-actions">
+            <a class="bnfs-btn" href="@Model.RawUrl">View raw</a>
+            <a class="bnfs-btn" href="@Model.RawUrl" download="@Model.FileName">Download</a>
+        </div>
+    </div>
+
+    <div class="bnfs-markdown markdown-body">
+        @Model.Content
+    </div>
+</div>

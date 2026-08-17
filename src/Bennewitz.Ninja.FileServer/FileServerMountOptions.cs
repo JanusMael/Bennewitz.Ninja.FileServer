@@ -17,8 +17,9 @@ public sealed class FileServerMountOptions
     /// <summary>
     /// Absolute path to the directory whose contents are served. Must be fully qualified
     /// (e.g. <c>/srv/files</c> or <c>C:\Share</c>) and must exist when the mount is registered.
+    /// Validated by <c>MapFileServer</c>, which fails at startup rather than at request time.
     /// </summary>
-    public required string RootPath { get; set; }
+    public string RootPath { get; set; } = string.Empty;
 
     /// <summary>
     /// File extensions that may be listed and downloaded. When empty (the default) every file
@@ -44,13 +45,30 @@ public sealed class FileServerMountOptions
     /// <summary>
     /// Application-relative path to the layout used for this mount's pages, for example
     /// <c>/Views/Shared/_Layout.cshtml</c> or <c>/Pages/Shared/_Layout.cshtml</c>. When
-    /// <c>null</c> (the default) the component's own self-contained layout is used.
+    /// <c>null</c> (the default) the component's own self-contained layout is used, which
+    /// produces the same appearance as the standalone server.
     /// </summary>
     /// <remarks>
     /// A host layout must not rely on the component declaring Razor sections — the component
     /// never does, because an unrendered declared section throws at request time.
     /// </remarks>
     public string? LayoutPath { get; set; }
+
+    /// <summary>
+    /// Whether the component emits a link to its own stylesheet. Default: <c>true</c>.
+    /// </summary>
+    /// <remarks>
+    /// The component never depends on the host providing CSS. Its stylesheet is self-contained,
+    /// served from this mount's own asset endpoint, and referenced from within the page body
+    /// rather than a layout section — so it applies identically whether the host supplies a
+    /// layout or not, and whether that layout brings a CSS framework or nothing at all. Class
+    /// names are prefixed so they cannot collide with a host's own framework.
+    /// <para>
+    /// Set to <c>false</c> only to style the file browser yourself: the markup keeps its
+    /// prefixed class names and no stylesheet link is emitted.
+    /// </para>
+    /// </remarks>
+    public bool IncludeDefaultStyles { get; set; } = true;
 
     /// <summary>
     /// Value sent in the <c>Cache-Control</c> response header for served files.

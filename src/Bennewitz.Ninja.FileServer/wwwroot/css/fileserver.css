@@ -1,0 +1,143 @@
+/*
+ * Self-contained styles for the file browser.
+ *
+ * Every class is prefixed `bnfs-` and every rule is scoped beneath `.bnfs-root`, so this
+ * cannot collide with a host application's own framework — and equally, a host that brings no
+ * CSS at all still gets a presentable page. Nothing here depends on Bootstrap, Tailwind, or
+ * any reset the host may or may not have applied.
+ */
+
+.bnfs-root {
+    --bnfs-bg: #fff;
+    --bnfs-fg: #212529;
+    --bnfs-muted: #6c757d;
+    --bnfs-border: #dee2e6;
+    --bnfs-hover: #f6f8fa;
+    --bnfs-head: #f8f9fa;
+    --bnfs-accent: #0969da;
+
+    color: var(--bnfs-fg);
+    background: var(--bnfs-bg);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 1.25rem 1rem 2.5rem;
+    box-sizing: border-box;
+}
+
+@media (prefers-color-scheme: dark) {
+    .bnfs-root {
+        --bnfs-bg: #1a1d20;
+        --bnfs-fg: #dee2e6;
+        --bnfs-muted: #9ca3af;
+        --bnfs-border: #373b3e;
+        --bnfs-hover: #25282b;
+        --bnfs-head: #212529;
+        --bnfs-accent: #6cb6ff;
+    }
+}
+
+.bnfs-root *,
+.bnfs-root *::before,
+.bnfs-root *::after { box-sizing: inherit; }
+
+.bnfs-root a { color: var(--bnfs-accent); text-decoration: none; }
+.bnfs-root a:hover { text-decoration: underline; }
+
+/* ---- header ---------------------------------------------------------- */
+
+.bnfs-header {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: .6rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--bnfs-border);
+}
+
+.bnfs-crumbs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .35rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: .95rem;
+    min-width: 0;
+}
+
+.bnfs-crumbs li { display: flex; align-items: center; gap: .35rem; }
+.bnfs-crumbs li + li::before { content: "/"; color: var(--bnfs-muted); }
+.bnfs-crumbs .bnfs-current { color: var(--bnfs-muted); }
+
+.bnfs-actions { display: flex; gap: .5rem; flex-shrink: 0; }
+
+.bnfs-btn {
+    display: inline-block;
+    padding: .25rem .7rem;
+    font-size: .85rem;
+    font-family: inherit;
+    line-height: 1.6;
+    color: var(--bnfs-fg);
+    background: transparent;
+    border: 1px solid var(--bnfs-border);
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.bnfs-btn:hover { background: var(--bnfs-hover); text-decoration: none; }
+
+/* ---- listing --------------------------------------------------------- */
+
+.bnfs-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid var(--bnfs-border);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.bnfs-table th,
+.bnfs-table td {
+    text-align: left;
+    padding: .45rem .75rem;
+    border-bottom: 1px solid var(--bnfs-border);
+    white-space: nowrap;
+}
+
+.bnfs-table th {
+    background: var(--bnfs-head);
+    font-size: .8rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--bnfs-muted);
+    font-weight: 600;
+}
+
+.bnfs-table tbody tr:last-child td { border-bottom: 0; }
+.bnfs-table tbody tr:hover { background: var(--bnfs-hover); }
+
+.bnfs-name { width: 100%; white-space: normal; word-break: break-word; }
+.bnfs-size,
+.bnfs-date { color: var(--bnfs-muted); font-variant-numeric: tabular-nums; font-size: .9rem; }
+
+.bnfs-icon { display: inline-block; width: 1.25rem; opacity: .75; }
+
+.bnfs-empty { padding: 1.5rem .75rem; color: var(--bnfs-muted); text-align: center; }
+
+/* ---- markdown -------------------------------------------------------- */
+
+/* github-markdown.css scopes itself to .markdown-body; this only sizes the container. */
+.bnfs-markdown { padding: .25rem 0 1rem; }
+
+@media (max-width: 600px) {
+    .bnfs-root { padding: 1rem .75rem 2rem; }
+    .bnfs-date { display: none; }
+    .bnfs-table th.bnfs-date-h { display: none; }
+}

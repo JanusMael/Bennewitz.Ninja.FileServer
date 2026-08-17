@@ -1,0 +1,88 @@
+@model FileServerDirectoryViewModel
+@{
+    Layout = ViewData[RazorViewRenderer.LayoutKey] as string
+             ?? "/Views/FileServer/_FileServerLayout.cshtml";
+    ViewData["Title"] = Model.Title;
+}
+@*
+    No @section declarations anywhere in this file. A host layout is under no obligation to
+    render one, and an unrendered declared section throws at request time rather than degrading.
+    The stylesheet link therefore lives in the body, which is valid HTML5 and works under any
+    layout — including a host layout that supplies no CSS of its own.
+*@
+@if (Model.StylesheetUrl is not null)
+{
+    <link rel="stylesheet" href="@Model.StylesheetUrl"/>
+}
+
+<div class="bnfs-root">
+    <div class="bnfs-header">
+        <ol class="bnfs-crumbs">
+            @for (var i = 0; i < Model.Breadcrumbs.Count; i++)
+            {
+                var crumb = Model.Breadcrumbs[i];
+                if (i == Model.Breadcrumbs.Count - 1)
+                {
+                    <li><span class="bnfs-current">@crumb.Name</span></li>
+                }
+                else
+                {
+                    <li><a href="@crumb.Url">@crumb.Name</a></li>
+                }
+            }
+        </ol>
+
+        @if (Model.ParentUrl is not null)
+        {
+            <div class="bnfs-actions">
+                <a class="bnfs-btn" href="@Model.ParentUrl">Up</a>
+            </div>
+        }
+    </div>
+
+    @if (Model.Entries.Count == 0)
+    {
+        <div class="bnfs-empty">This folder is empty.</div>
+    }
+    else
+    {
+        <table class="bnfs-table">
+            <thead>
+            <tr>
+                <th class="bnfs-name">Name</th>
+                <th>Size</th>
+                <th class="bnfs-date-h">Modified</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var entry in Model.Entries)
+            {
+                <tr>
+                    <td class="bnfs-name">
+                        <span class="bnfs-icon">@(entry.IsDirectory ? "📁" : "📄")</span>
+                        <a href="@entry.Url">@entry.Name@(entry.IsDirectory ? "/" : "")</a>
+                    </td>
+                    <td class="bnfs-size">@FormatSize(entry.Length)</td>
+                    <td class="bnfs-date">@(entry.LastModified?.ToString("yyyy-MM-dd HH:mm") ?? "")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+</div>
+
+@functions {
+    private static string FormatSize(long? bytes)
+    {
+        if (bytes is not { } value) return "—";
+        string[] units = ["B", "KB", "MB", "GB", "TB"];
+        double size = value;
+        var unit = 0;
+        while (size >= 1024 && unit < units.Length - 1)
+        {
+            size /= 1024;
+            unit++;
+        }
+        return unit == 0 ? $"{value} B" : $"{size:0.#} {units[unit]}";
+    }
+}
