@@ -13,6 +13,15 @@
         <AssemblyName>Bennewitz.Ninja.FileServer</AssemblyName>
         <RootNamespace>Bennewitz.Ninja.FileServer</RootNamespace>
 
+        <!--
+          NuGet identifies every project in the restore graph by PackageId, falling back to
+          AssemblyName. This executable is never packed, but its AssemblyName is deliberately
+          the same string the library publishes as its PackageId, so without an explicit id of
+          its own the restore fails with "Ambiguous project name 'Bennewitz.Ninja.FileServer'".
+        -->
+        <IsPackable>false</IsPackable>
+        <PackageId>Bennewitz.Ninja.FileServer.Cli</PackageId>
+
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
         <!-- Suppress IIS web.config generation — this app is not deployed to IIS. -->
         <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>

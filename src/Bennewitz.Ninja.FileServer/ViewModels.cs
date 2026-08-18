@@ -72,4 +72,11 @@ public sealed class FileServerMarkdownViewModel : FileServerViewModel
 
     /// <summary>URL of the stylesheet used for rendered Markdown, when styles are enabled.</summary>
     public string? MarkdownStylesheetUrl { get; init; }
+
+    /// <summary>
+    /// URL of the script backing the colour-scheme toggle, or <c>null</c> when the host has
+    /// opted out via <see cref="FileServerMountOptions.IncludeDefaultStyles"/> — the toggle
+    /// exists to override the component's own stylesheets, so it goes when they do.
+    /// </summary>
+    public string? ScriptUrl { get; init; }
 }

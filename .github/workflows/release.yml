@@ -10,6 +10,12 @@ jobs:
     permissions:
       contents: write
 
+    env:
+      # Read here rather than in the push step's own `if`, where the secrets context is not
+      # available. An empty value skips the push, so a fork or a repository that has not set
+      # the secret still gets a complete GitHub Release.
+      NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -27,6 +33,19 @@ jobs:
         env:
           PublicVersion: ${{ steps.version.outputs.version }}
 
+      - name: Pack the component
+        run: dotnet pack src/Bennewitz.Ninja.FileServer -c Release -o nupkg
+        env:
+          PublicVersion: ${{ steps.version.outputs.version }}
+
+      - name: Push the package to NuGet.org
+        if: env.NUGET_API_KEY != ''
+        run: >
+          dotnet nuget push "nupkg/*.nupkg"
+          --source https://api.nuget.org/v3/index.json
+          --api-key "$NUGET_API_KEY"
+          --skip-duplicate
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -35,3 +54,4 @@ jobs:
           files: |
             publish/dist/*.zip
             publish/dist/*.tar.gz
+            nupkg/*.nupkg

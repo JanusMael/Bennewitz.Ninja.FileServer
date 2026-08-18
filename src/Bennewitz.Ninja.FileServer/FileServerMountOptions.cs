@@ -55,7 +55,8 @@ public sealed class FileServerMountOptions
     public string? LayoutPath { get; set; }
 
     /// <summary>
-    /// Whether the component emits a link to its own stylesheet. Default: <c>true</c>.
+    /// Whether the component emits its own presentation: a link to its stylesheet, and on
+    /// Markdown pages the colour-scheme toggle that overrides it. Default: <c>true</c>.
     /// </summary>
     /// <remarks>
     /// The component never depends on the host providing CSS. Its stylesheet is self-contained,
@@ -65,7 +66,8 @@ public sealed class FileServerMountOptions
     /// names are prefixed so they cannot collide with a host's own framework.
     /// <para>
     /// Set to <c>false</c> only to style the file browser yourself: the markup keeps its
-    /// prefixed class names and no stylesheet link is emitted.
+    /// prefixed class names, and neither the stylesheet link nor the toggle is emitted — the
+    /// toggle goes with the stylesheets because overriding them is its only purpose.
     /// </para>
     /// </remarks>
     public bool IncludeDefaultStyles { get; set; } = true;

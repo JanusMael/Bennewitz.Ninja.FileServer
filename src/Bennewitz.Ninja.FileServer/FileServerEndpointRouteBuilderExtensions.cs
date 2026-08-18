@@ -84,7 +84,7 @@ public static class FileServerEndpointRouteBuilderExtensions
         // reach it, so an unauthenticated visitor still gets a styled page at the login prompt.
         endpoints.MapGet(
                 $"{mount.Prefix}/{FileServerAssets.RouteSegment}/{{version}}/{{**assetPath}}",
-                (string assetPath) => ServeAsset(assetPath))
+                (HttpContext http, string assetPath) => ServeAsset(http, assetPath))
             .AllowAnonymous()
             .WithName($"FileServerAssets{mount.Prefix.Replace('/', '_')}");
 
@@ -195,7 +195,7 @@ public static class FileServerEndpointRouteBuilderExtensions
         {
             Title = path.Length == 0 ? mount.Prefix.TrimStart('/') : path,
             Breadcrumbs = BuildCrumbs(http, mount, path, includeLeaf: true),
-            StylesheetUrl = StylesheetUrl(http, mount, "css/fileserver.css"),
+            StylesheetUrl = AssetUrl(http, mount, "css/fileserver.css"),
             Entries = entries,
             ParentUrl = path.Length == 0
                 ? null
@@ -231,8 +231,9 @@ public static class FileServerEndpointRouteBuilderExtensions
         {
             Title = fileName,
             Breadcrumbs = BuildCrumbs(http, mount, path, includeLeaf: false),
-            StylesheetUrl = StylesheetUrl(http, mount, "css/fileserver.css"),
-            MarkdownStylesheetUrl = StylesheetUrl(http, mount, "css/github-markdown.min.css"),
+            StylesheetUrl = AssetUrl(http, mount, "css/fileserver.css"),
+            MarkdownStylesheetUrl = AssetUrl(http, mount, "css/github-markdown.min.css"),
+            ScriptUrl = AssetUrl(http, mount, "js/fileserver.js"),
             Content = new HtmlString(Markdown.ToHtml(source, pipeline)),
             FileName = fileName,
             RawUrl = mount.Url(http.Request, path) + "?raw=1"
@@ -242,16 +243,21 @@ public static class FileServerEndpointRouteBuilderExtensions
         return Results.Empty;
     }
 
-    private static IResult ServeAsset(string assetPath)
+    private static IResult ServeAsset(HttpContext http, string assetPath)
     {
         if (!FileServerAssets.TryOpen(assetPath, out var content, out var contentType))
             return Results.NotFound();
 
-        // Content-addressed by the version segment in the URL, so it may be cached forever.
+        // The version segment changes with every build of this assembly, so a given URL always
+        // answers with the same bytes and can be cached for as long as the client likes. Said
+        // explicitly rather than left to heuristic freshness, which would re-request the
+        // stylesheet on most navigations.
+        http.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
+
         return Results.Stream(content, contentType, enableRangeProcessing: false);
     }
 
-    private static string? StylesheetUrl(HttpContext http, FileServerMount mount, string asset)
+    private static string? AssetUrl(HttpContext http, FileServerMount mount, string asset)
     {
         if (!mount.Options.IncludeDefaultStyles)
             return null;

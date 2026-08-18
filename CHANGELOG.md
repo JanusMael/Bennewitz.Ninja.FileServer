@@ -9,6 +9,22 @@ Versions follow a `YYYY.M.D` calendar scheme.
 
 ## [Unreleased]
 
+### Added
+- The file browser is installable as a NuGet package, [`Bennewitz.Ninja.FileServer`](https://www.nuget.org/packages/Bennewitz.Ninja.FileServer). `AddFileServer()` plus `MapFileServer("/docs", …)` mounts a browsable, downloadable directory on a route of any ASP.NET Core application; call it once per directory to serve several. Views, styles, and script are compiled or embedded into the assembly, so a host needs no `wwwroot/` and never has to call `UseStaticFiles`.
+- `MapFileServer` returns the mount's route group, so `RequireAuthorization()` applied to it covers file downloads as well as listings — files are served from endpoints rather than static-file middleware precisely so that authorization has something to enforce against. The stylesheet endpoint stays anonymous, so an unauthenticated visitor still lands on a styled login page.
+- Per-mount options: `RootPath`, `AllowedExtensions`, `EnableDirectoryBrowsing`, `RenderMarkdown`, `LayoutPath` (render inside a host layout), `IncludeDefaultStyles`, and `CacheControl`. Mounts share no state, so each can have its own filter, layout, and policy.
+- Registrations that would make authorization ambiguous now fail while the pipeline is built rather than at request time: a duplicate route prefix, or a root directory that overlaps another mount's root.
+
+### Changed
+- The standalone server runs on the component, through the same public API a package consumer uses. Its Bootstrap-based directory formatter and Markdown page are gone, along with the `/view` redirect — a `.md` file now renders at its own URL, with `?raw` serving the source.
+- Listings and rendered Markdown use a self-contained stylesheet whose every class is prefixed `bnfs-`, so the pages look right in a host that brings no CSS and cannot collide with one that brings its own.
+- The Auto / Light / Dark control now themes the whole page rather than only the document body, so a pinned scheme no longer leaves a light document inside dark chrome.
+- Path containment resolves symlinks on every path segment before comparing against the mount root, and compares ordinally. String canonicalisation alone never touches the filesystem, so a link in an intermediate directory could otherwise escape the root undetected.
+- Component assets are served with `Cache-Control: public, max-age=31536000, immutable`. Their URLs carry a build-specific version segment, so an upgrade re-fetches them.
+
+### Removed
+- Bootstrap and the stock ASP.NET favicon are no longer shipped. Nothing referenced them once the component owned the UI, and they were the bulk of the embedded assets.
+
 ### Fixed
 - `settings.json.example` is now actually present in the release archives. It has been documented as shipping since 2026.5.15 but never reached the publish output, so the binary's first-run "example configuration file is available at…" hint never appeared.
 - A local `settings.json` is no longer published. Previously a release built on a developer machine shipped that machine-specific file renamed to `settings.json.example`, leaking local paths into the archive.

@@ -27,6 +27,13 @@
         <div class="bnfs-actions">
             <a class="bnfs-btn" href="@Model.RawUrl">View raw</a>
             <a class="bnfs-btn" href="@Model.RawUrl" download="@Model.FileName">Download</a>
+            @if (Model.ScriptUrl is not null)
+            {
+                @* Rendered only alongside the component's own styles: pinning a scheme means
+                   overriding those stylesheets, and there is nothing to override without them.
+                   The label is corrected by the script from the remembered choice. *@
+                <button type="button" class="bnfs-btn" data-bnfs-theme-toggle>Auto</button>
+            }
         </div>
     </div>
 
@@ -34,3 +41,10 @@
         @Model.Content
     </div>
 </div>
+
+@if (Model.ScriptUrl is not null)
+{
+    @* Placed after the markup it drives rather than in a Scripts section — the component
+       declares no sections, and a host layout is not obliged to render any. *@
+    <script src="@Model.ScriptUrl"></script>
+}

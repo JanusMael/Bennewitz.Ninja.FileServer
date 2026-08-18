@@ -10,7 +10,7 @@
 
 ```sh
 # Debug run (reads settings.json from the project directory)
-dotnet run --project src/Bennewitz.Ninja.FileServer
+dotnet run --project src/Bennewitz.Ninja.FileServer.Cli
 
 # Release build
 dotnet build -c Release

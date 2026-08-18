@@ -17,7 +17,7 @@ namespace Bennewitz.Ninja.FileServer;
 /// Lookup goes through <see cref="ManifestEmbeddedFileProvider"/> rather than raw resource
 /// names: the manifest preserves real directory structure, whereas resource names flatten
 /// paths into dots and cannot be reversed unambiguously for a file such as
-/// <c>bootstrap.min.css</c>.
+/// <c>github-markdown.min.css</c>.
 /// </para>
 /// </remarks>
 internal static class FileServerAssets
@@ -39,7 +39,7 @@ internal static class FileServerAssets
         typeof(FileServerAssets).Assembly.ManifestModule.ModuleVersionId.ToString("N")[..12];
 
     /// <summary>
-    /// Opens an embedded asset by its path within <c>wwwroot</c>, e.g. <c>css/site.css</c>.
+    /// Opens an embedded asset by its path within <c>wwwroot</c>, e.g. <c>css/fileserver.css</c>.
     /// </summary>
     internal static bool TryOpen(string relativePath, out Stream content, out string contentType)
     {
