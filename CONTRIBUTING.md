@@ -144,6 +144,24 @@ no long-lived API key in the repository to rotate or leak. Two things have to li
 Without `NUGET_USER` the push step is skipped and everything else still runs, so tagging from a
 fork — or before the policy exists — produces a complete GitHub Release rather than a failure.
 
+### Checking the credentials without releasing
+
+A version on NuGet.org is permanent, so confirm the policy works before the tag that depends on
+it. Run the `Release` workflow by hand — **Actions → Release → Run workflow**, or:
+
+```sh
+gh workflow run release.yml
+```
+
+A manual run logs in and stops: every publishing step is gated on a tag push, so it cannot
+release anything. It fails loudly if `NUGET_USER` is missing, and otherwise reports which account
+it authenticated as.
+
+The check has to live in the release workflow rather than a test workflow of its own, because
+the OIDC token is bound to the workflow file and any other filename would fail to match the
+policy. GitHub also only offers manual runs for workflows on the default branch, so this becomes
+available once the workflow is merged to `main`.
+
 To add an approval gate before anything reaches NuGet.org, create a `release` environment with
 required reviewers, add `environment: release` to the `publish` job, and set the same environment
 name on the nuget.org policy.

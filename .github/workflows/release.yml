@@ -3,6 +3,12 @@ name: Release
 on:
   push:
     tags: ['v*']
+  # Credential preflight. Running this by hand logs in to NuGet.org and stops, which proves the
+  # trusted-publishing policy, the id-token permission, and the NUGET_USER secret all line up —
+  # without cutting a release. It has to live in this workflow rather than a test one of its own:
+  # the OIDC token is bound to the workflow file, so a different filename would never match the
+  # policy. Every publishing step below is gated on a tag push, so a manual run cannot publish.
+  workflow_dispatch:
 
 jobs:
   publish:
@@ -23,6 +29,8 @@ jobs:
       # fork or a repository that has not configured trusted publishing still gets a complete
       # GitHub Release.
       NUGET_USER: ${{ secrets.NUGET_USER }}
+      # A tag push is a real release; anything else is the preflight.
+      RELEASING: ${{ github.event_name == 'push' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -33,15 +41,18 @@ jobs:
 
       - name: Extract version from tag
         id: version
+        if: env.RELEASING == 'true'
         run: echo "version=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Publish all RIDs
+        if: env.RELEASING == 'true'
         run: pwsh publish/publish.ps1 -All
         env:
           PublicVersion: ${{ steps.version.outputs.version }}
 
       - name: Pack the component
+        if: env.RELEASING == 'true'
         run: dotnet pack src/Bennewitz.Ninja.FileServer -c Release -o nupkg
         env:
           PublicVersion: ${{ steps.version.outputs.version }}
@@ -55,8 +66,19 @@ jobs:
         with:
           user: ${{ secrets.NUGET_USER }}
 
+      - name: Report the preflight result
+        if: env.RELEASING != 'true'
+        run: |
+          if [ -z "$NUGET_USER" ]; then
+            echo "::error::NUGET_USER is not set, so no publish would happen on a tag."
+            exit 1
+          fi
+          echo "Logged in to NuGet.org as '$NUGET_USER'. Tagging will publish."
+          echo "### Trusted publishing verified" >> "$GITHUB_STEP_SUMMARY"
+          echo "Logged in as \`$NUGET_USER\`. A \`v*\` tag will publish the package." >> "$GITHUB_STEP_SUMMARY"
+
       - name: Push the package to NuGet.org
-        if: env.NUGET_USER != ''
+        if: env.RELEASING == 'true' && env.NUGET_USER != ''
         run: >
           dotnet nuget push "nupkg/*.nupkg"
           --source https://api.nuget.org/v3/index.json
@@ -64,6 +86,7 @@ jobs:
           --skip-duplicate
 
       - name: Create GitHub Release
+        if: env.RELEASING == 'true'
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
