@@ -1,0 +1,50 @@
+@model FileServerMarkdownViewModel
+@{
+    Layout = ViewData[RazorViewRenderer.LayoutKey] as string
+             ?? "/Views/FileServer/_FileServerLayout.cshtml";
+    ViewData["Title"] = Model.Title;
+}
+@* No @section declarations — see the note in Directory.cshtml. *@
+@if (Model.StylesheetUrl is not null)
+{
+    <link rel="stylesheet" href="@Model.StylesheetUrl"/>
+}
+@if (Model.MarkdownStylesheetUrl is not null)
+{
+    <link rel="stylesheet" href="@Model.MarkdownStylesheetUrl"/>
+}
+
+<div class="bnfs-root">
+    <div class="bnfs-header">
+        <ol class="bnfs-crumbs">
+            @foreach (var crumb in Model.Breadcrumbs)
+            {
+                <li><a href="@crumb.Url">@crumb.Name</a></li>
+            }
+            <li><span class="bnfs-current">@Model.FileName</span></li>
+        </ol>
+
+        <div class="bnfs-actions">
+            <a class="bnfs-btn" href="@Model.RawUrl">View raw</a>
+            <a class="bnfs-btn" href="@Model.RawUrl" download="@Model.FileName">Download</a>
+            @if (Model.ScriptUrl is not null)
+            {
+                @* Rendered only alongside the component's own styles: pinning a scheme means
+                   overriding those stylesheets, and there is nothing to override without them.
+                   The label is corrected by the script from the remembered choice. *@
+                <button type="button" class="bnfs-btn" data-bnfs-theme-toggle>Auto</button>
+            }
+        </div>
+    </div>
+
+    <div class="bnfs-markdown markdown-body">
+        @Model.Content
+    </div>
+</div>
+
+@if (Model.ScriptUrl is not null)
+{
+    @* Placed after the markup it drives rather than in a Scripts section — the component
+       declares no sections, and a host layout is not obliged to render any. *@
+    <script src="@Model.ScriptUrl"></script>
+}

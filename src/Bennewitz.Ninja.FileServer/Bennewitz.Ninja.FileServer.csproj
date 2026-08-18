@@ -1,54 +1,111 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Razor">
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
-        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+
+        <!--
+          The assembly name differs from the package id on purpose: the CLI executable keeps
+          `Bennewitz.Ninja.FileServer`, and two assemblies cannot share a name in one output
+          folder. PackageId is set in the packaging section; RootNamespace stays put so
+          consumers still write `using Bennewitz.Ninja.FileServer;`.
+        -->
+        <AssemblyName>Bennewitz.Ninja.FileServer.Hosting</AssemblyName>
+        <RootNamespace>Bennewitz.Ninja.FileServer</RootNamespace>
+
+        <!-- Sdk.Razor targets Razor Components by default and will not compile MVC .cshtml
+             views without this. Verified the hard way during the Phase 0 spike. -->
+        <AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+
+        <!-- Assets ship as embedded resources served from an endpoint, never as RCL static
+             web assets, so the static-web-assets pipeline is dead weight here. -->
+        <StaticWebAssetsEnabled>false</StaticWebAssetsEnabled>
+
+        <!-- Derives the XML filename from AssemblyName. A hardcoded DocumentationFile would
+             no longer match, and NuGet matches docs to $(AssemblyName).xml — consumers would
+             silently get no IntelliSense. -->
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
         <GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
-        <!-- Suppress IIS web.config generation — this app is not deployed to IIS. -->
-        <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
-    </PropertyGroup>
-
-    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-      <DocumentationFile>bin\Release\Bennewitz.Ninja.FileServer.xml</DocumentationFile>
     </PropertyGroup>
 
     <ItemGroup>
-      <Content Update="settings.json">
-        <DependentUpon>Settings.cs</DependentUpon>
-        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      </Content>
-      <!-- appsettings files are not used by this app (config lives in settings.json). -->
-      <Content Update="appsettings.json">
-        <CopyToPublishDirectory>Never</CopyToPublishDirectory>
-      </Content>
-      <Content Update="appsettings.Development.json">
-        <CopyToPublishDirectory>Never</CopyToPublishDirectory>
-      </Content>
-      <!-- Embed wwwroot into the assembly so no wwwroot/ folder is required at runtime. -->
-      <Content Remove="wwwroot\**" />
-      <EmbeddedResource Include="wwwroot\**" />
+        <!-- Sdk.Razor does not add the ASP.NET Core framework reference that Sdk.Web does. -->
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Markdig" Version="1.2.0" />
-      <!--
-        Build-only reference: provides the MSBuild targets that generate the embedded file
-        manifest (Microsoft.Extensions.FileProviders.Embedded.Manifest.xml) at build time.
-        The runtime type (ManifestEmbeddedFileProvider) comes from the shared framework.
-      -->
-      <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="10.0.8">
-        <PrivateAssets>all</PrivateAssets>
-        <IncludeAssets>build</IncludeAssets>
-      </PackageReference>
+        <!-- The CLI host has no internals access: it consumes the same public API a package
+             consumer does, so anything it needs must be public. Tests reach the internal
+             containment and filtering types directly, which are the parts worth testing in
+             isolation. -->
+        <InternalsVisibleTo Include="Bennewitz.Ninja.FileServer.Tests" />
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Bennewitz.Ninja.AutoVersioning" Version="2026.2.522">
-        <PrivateAssets>all</PrivateAssets>
-        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      </PackageReference>
+        <!-- Embed wwwroot into the assembly so no wwwroot/ folder is required at runtime. -->
+        <Content Remove="wwwroot\**" />
+        <EmbeddedResource Include="wwwroot\**" />
     </ItemGroup>
 
+    <ItemGroup>
+        <!--
+          Build-only reference: provides the MSBuild targets that generate the embedded file
+          manifest (Microsoft.Extensions.FileProviders.Embedded.Manifest.xml) at build time.
+          The runtime type (ManifestEmbeddedFileProvider) comes from the shared framework.
+        -->
+        <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="10.0.8">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>build</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Markdig" Version="1.2.0" />
+        <!-- Tokenises fenced code blocks. Its class names are translated to GitHub's in
+             MarkdownSyntaxHighlighter, so no stylesheet of its own is needed. -->
+        <PackageReference Include="ColorCode.HTML" Version="2.0.15" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Bennewitz.Ninja.AutoVersioning" Version="2026.2.522">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+    <!-- ── Packaging ──────────────────────────────────────────────────────────────────
+         `dotnet add package Bennewitz.Ninja.FileServer` must be the whole installation
+         story: views, styles, and script are compiled or embedded into the assembly, so
+         the package carries one dll and nothing a host has to copy or wire up. -->
+    <PropertyGroup>
+        <PackageId>Bennewitz.Ninja.FileServer</PackageId>
+        <Title>Bennewitz.Ninja.FileServer</Title>
+        <Description>Mount a browsable, downloadable view of a directory on a route of an existing ASP.NET Core application: AddFileServer(), then MapFileServer("/docs", o =&gt; o.RootPath = "/srv/docs"). Renders directory listings and Markdown with self-contained styles, resolves symlinks before every containment check, and serves files from endpoints rather than static-file middleware so RequireAuthorization() covers downloads as well as listings. Any number of independently configured and independently protected mounts per application.</Description>
+        <Authors>Brian Bennewitz</Authors>
+        <PackageTags>aspnetcore;file-server;directory-browser;file-browser;markdown;downloads;razor</PackageTags>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+        <PackageProjectUrl>https://github.com/JanusMael/Bennewitz.Ninja.FileServer</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/JanusMael/Bennewitz.Ninja.FileServer</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+
+        <!-- The release workflow passes the tag's version in as PublicVersion, which the
+             version generator reads for assembly attributes. NuGet reads none of that, so it
+             is mapped here as well; otherwise every published package would be 1.0.0. -->
+        <Version Condition="'$(PublicVersion)' != ''">$(PublicVersion)</Version>
+
+        <!-- No .snupkg: DebugType is `embedded` repo-wide, so symbols live inside the dll and
+             there is no separate .pdb for a symbol package to carry. SourceLink still resolves
+             sources from the repository, and untracked generated sources are embedded. -->
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <!-- Shown on the package page; scoped to consuming the library, while the repository
+             README leads with the standalone server. -->
+        <None Include="README.md" Pack="true" PackagePath="\" />
+    </ItemGroup>
 </Project>

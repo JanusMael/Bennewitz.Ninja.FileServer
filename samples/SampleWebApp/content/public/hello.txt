@@ -1,0 +1,1 @@
+A plain text file, served as text/plain with an explicit UTF-8 charset.

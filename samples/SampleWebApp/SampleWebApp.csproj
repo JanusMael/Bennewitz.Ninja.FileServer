@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <IsPackable>false</IsPackable>
+
+        <!--
+          Floats to the newest local prerelease, so re-running publish/Pack-Local.ps1 is enough to
+          test a change — no version to edit here between iterations. Pin it to a real version
+          (`-p:FileServerVersion=2026.8.18`) to check the sample against a published package.
+        -->
+        <FileServerVersion Condition="'$(FileServerVersion)' == ''">*-*</FileServerVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <!--
+          A PackageReference on purpose, not a ProjectReference. The point of this sample is to
+          prove the package carries everything a host needs: compiled views, embedded styles and
+          script, and its own dependencies. A project reference would let the compiler see types
+          that the package might not actually ship.
+
+          Restore therefore needs the local feed populated first:
+              pwsh publish/Pack-Local.ps1
+        -->
+        <PackageReference Include="Bennewitz.Ninja.FileServer" Version="$(FileServerVersion)" />
+    </ItemGroup>
+
+</Project>

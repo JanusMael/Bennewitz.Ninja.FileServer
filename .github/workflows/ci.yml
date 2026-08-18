@@ -22,3 +22,54 @@ jobs:
 
       - name: Build
         run: dotnet build -c Release --no-restore
+
+      - name: Test
+        run: dotnet test -c Release --no-build
+
+      # Packing is where the project graph is validated as NuGet sees it — a build alone would
+      # not have caught the id collision between the library's PackageId and the executable's
+      # AssemblyName. Output goes to the feed the sample already points at.
+      - name: Pack
+        run: dotnet pack src/Bennewitz.Ninja.FileServer -c Release --no-build -o publish/local-feed
+
+      # The sample takes a PackageReference, so building it restores the package that was just
+      # produced and compiles against what it actually ships — not against a project reference
+      # that would resolve types the package might omit.
+      - name: Build the sample against the package
+        run: dotnet build samples/SampleWebApp -c Release
+
+      # Boot failures do not show up in a build: a missing view, an unregistered service, or a
+      # port that cannot bind all compile perfectly well.
+      - name: Smoke-test the published binary
+        run: pwsh publish/Smoke-Test.ps1
+
+  docker:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # The image is a shipped artifact and breaks in ways the .NET build cannot see: a base
+      # image that drops a tool the Dockerfile calls, or an entry point naming an assembly that
+      # is not an executable. Both have happened here.
+      - name: Build the container image
+        run: docker build -f docker/Dockerfile -t fileserver:ci .
+
+      - name: Run it and check it serves
+        run: |
+          mkdir -p /tmp/ci-files
+          echo '# hello' > /tmp/ci-files/readme.md
+          docker run -d --name fileserver-ci \
+            -e FILE_SERVER_ROOT=/data \
+            -v /tmp/ci-files:/data:ro \
+            -p 5550:5550 fileserver:ci
+
+          for i in $(seq 1 30); do
+            if curl -sf -o /dev/null http://localhost:5550/files; then break; fi
+            sleep 1
+          done
+
+          curl -sf -o /dev/null -w 'listing %{http_code}\n' http://localhost:5550/files
+          curl -sf -o /dev/null -w 'markdown %{http_code}\n' http://localhost:5550/files/readme.md
+          test "$(docker exec fileserver-ci id -u)" = "1654"
+          docker rm -f fileserver-ci

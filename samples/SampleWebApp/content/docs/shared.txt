@@ -1,0 +1,1 @@
+I live in content/docs. The identically-named file under /files has different bytes.

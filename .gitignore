@@ -8,7 +8,8 @@ build.binlog
 .vs/
 
 # JetBrains Rider
-/.idea/
+# Any depth: a nested project (samples/) gets its own .idea from Rider.
+.idea/
 /.run/
 
 # Local configuration — contains machine-specific paths; not for source control
@@ -19,3 +20,5 @@ src/**/settings.json
 
 # Publish output
 /publish/dist/
+# Local package feed for testing the component the way a consumer installs it.
+/publish/local-feed/

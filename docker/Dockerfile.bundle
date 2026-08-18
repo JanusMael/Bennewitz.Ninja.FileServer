@@ -20,21 +20,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf 
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
+# Both projects: the CLI host is the executable and references the component library.
 COPY ["src/Bennewitz.Ninja.FileServer/Bennewitz.Ninja.FileServer.csproj", "src/Bennewitz.Ninja.FileServer/"]
-RUN dotnet restore "src/Bennewitz.Ninja.FileServer/Bennewitz.Ninja.FileServer.csproj"
+COPY ["src/Bennewitz.Ninja.FileServer.Cli/Bennewitz.Ninja.FileServer.Cli.csproj", "src/Bennewitz.Ninja.FileServer.Cli/"]
+RUN dotnet restore "src/Bennewitz.Ninja.FileServer.Cli/Bennewitz.Ninja.FileServer.Cli.csproj"
 COPY . .
 WORKDIR "/src/"
-RUN dotnet build "src/Bennewitz.Ninja.FileServer/Bennewitz.Ninja.FileServer.csproj" -c Release -o /app/build
+RUN dotnet build "src/Bennewitz.Ninja.FileServer.Cli/Bennewitz.Ninja.FileServer.Cli.csproj" -c Release -o /app/build
 
 FROM build AS publish
 WORKDIR /src
-RUN dotnet publish "src/Bennewitz.Ninja.FileServer/Bennewitz.Ninja.FileServer.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "src/Bennewitz.Ninja.FileServer.Cli/Bennewitz.Ninja.FileServer.Cli.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
-# Run as unprivileged user — the app is read-only and needs no home directory
-RUN adduser --disabled-password --no-create-home appuser
-USER appuser
+# Run as the non-root `app` user (uid 1654) that the .NET runtime images already provide.
+# Creating one here is not portable: these images ship neither adduser nor useradd.
+USER app
 COPY --from=publish /app/publish .
 COPY FilesRoot/ /data/
 ENV FILE_SERVER_ROOT=/data

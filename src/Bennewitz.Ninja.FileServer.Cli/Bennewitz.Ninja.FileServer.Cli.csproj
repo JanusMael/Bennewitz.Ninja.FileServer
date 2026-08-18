@@ -1,0 +1,72 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+
+        <!--
+          The executable keeps its original name. Only the project moved; the shipped binary,
+          Docker ENTRYPOINT, and release archives are unchanged. The library carries a
+          different assembly name (…​.Hosting) so the two can coexist in one output folder.
+        -->
+        <AssemblyName>Bennewitz.Ninja.FileServer</AssemblyName>
+        <RootNamespace>Bennewitz.Ninja.FileServer</RootNamespace>
+
+        <!--
+          NuGet identifies every project in the restore graph by PackageId, falling back to
+          AssemblyName. This executable is never packed, but its AssemblyName is deliberately
+          the same string the library publishes as its PackageId, so without an explicit id of
+          its own the restore fails with "Ambiguous project name 'Bennewitz.Ninja.FileServer'".
+        -->
+        <IsPackable>false</IsPackable>
+        <PackageId>Bennewitz.Ninja.FileServer.Cli</PackageId>
+
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <!-- Suppress IIS web.config generation — this app is not deployed to IIS. -->
+        <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Bennewitz.Ninja.FileServer\Bennewitz.Ninja.FileServer.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!--
+          settings.json is gitignored local configuration holding machine-specific paths.
+          It is absent from CI checkouts and must never reach a release archive, so it is
+          explicitly not published; settings.json.example ships in its place.
+        -->
+        <Content Update="settings.json">
+            <DependentUpon>Settings.cs</DependentUpon>
+            <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+        </Content>
+        <!--
+          The checked-in configuration starter. Include (not Update) because the Web SDK's
+          default content globs cover only **/*.json and **/*.config — nothing matches the
+          .example extension, so an Update would silently no-op and the file would never
+          reach the publish output. Also copied to the build output so the first-run hint
+          in Settings finds it during `dotnet run`, just as it does beside a published binary.
+        -->
+        <Content Include="settings.json.example">
+            <DependentUpon>Settings.cs</DependentUpon>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </Content>
+        <!-- appsettings files are not used by this app (config lives in settings.json). -->
+        <Content Update="appsettings.json">
+            <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+        </Content>
+        <Content Update="appsettings.Development.json">
+            <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+        </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Bennewitz.Ninja.AutoVersioning" Version="2026.2.522">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+
+</Project>
