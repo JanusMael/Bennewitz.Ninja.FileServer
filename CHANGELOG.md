@@ -9,16 +9,20 @@ Versions follow a `YYYY.M.D` calendar scheme.
 
 ## [Unreleased]
 
+---
+
+## [2026.8.18] — 2026-08-18
+
 ### Added
-- The release workflow publishes the package to NuGet.org using trusted publishing, so no long-lived API key is stored in the repository. Tagging without the publishing account configured still produces a complete GitHub Release.
-- CI runs the tests, packs the component, builds the sample against that package, smoke-tests the published binary, and builds and runs the container image. A plain build caught none of the breakages found while assembling this release.
-- Fenced code blocks in rendered Markdown are tokenised, using GitHub's own token classes so the colour-scheme toggle governs code along with the rest of the page. Around two dozen languages are recognised; a fence tagged with anything else keeps its text and loses only the colour. Adds one dependency, `ColorCode.HTML`.
-- `samples/SampleWebApp`, an application that installs the component from a package and mounts it four times — default styling, inside the host's own layout, with an extension filter, and behind `RequireAuthorization` — together with `publish/Pack-Local.ps1`, which packs into a local feed for testing it that way.
-- Test suite for the component: containment (including symlinked leaves and symlinked intermediate directories), the extension filter on both the listing and download paths, prefix normalisation, mount conflict detection, and integration tests proving `RequireAuthorization` covers downloads while the asset endpoint stays anonymous.
 - The file browser is installable as a NuGet package, [`Bennewitz.Ninja.FileServer`](https://www.nuget.org/packages/Bennewitz.Ninja.FileServer). `AddFileServer()` plus `MapFileServer("/docs", …)` mounts a browsable, downloadable directory on a route of any ASP.NET Core application; call it once per directory to serve several. Views, styles, and script are compiled or embedded into the assembly, so a host needs no `wwwroot/` and never has to call `UseStaticFiles`.
 - `MapFileServer` returns the mount's route group, so `RequireAuthorization()` applied to it covers file downloads as well as listings — files are served from endpoints rather than static-file middleware precisely so that authorization has something to enforce against. The stylesheet endpoint stays anonymous, so an unauthenticated visitor still lands on a styled login page.
 - Per-mount options: `RootPath`, `AllowedExtensions`, `EnableDirectoryBrowsing`, `RenderMarkdown`, `LayoutPath` (render inside a host layout), `IncludeDefaultStyles`, and `CacheControl`. Mounts share no state, so each can have its own filter, layout, and policy.
 - Registrations that would make authorization ambiguous now fail while the pipeline is built rather than at request time: a duplicate route prefix, or a root directory that overlaps another mount's root.
+- Fenced code blocks in rendered Markdown are tokenised, using GitHub's own token classes so the colour-scheme toggle governs code along with the rest of the page. Around two dozen languages are recognised; a fence tagged with anything else keeps its text and loses only the colour. Adds one dependency, `ColorCode.HTML`.
+- Test suite for the component: containment (including symlinked leaves and symlinked intermediate directories), the extension filter on both the listing and download paths, prefix normalisation, mount conflict detection, and integration tests proving `RequireAuthorization` covers downloads while the asset endpoint stays anonymous.
+- `samples/SampleWebApp`, an application that installs the component from a package and mounts it four times — default styling, inside the host's own layout, with an extension filter, and behind `RequireAuthorization` — together with `publish/Pack-Local.ps1`, which packs into a local feed for testing it that way.
+- CI runs the tests, packs the component, builds the sample against that package, smoke-tests the published binary, and builds and runs the container image. A plain build caught none of the breakages found while assembling this release.
+- The release workflow publishes the package to NuGet.org using trusted publishing, so no long-lived API key is stored in the repository. Tagging without the publishing account configured still produces a complete GitHub Release.
 
 ### Changed
 - `--help` prints the build's version, which the contributing guide has always told bug reporters to read from it.
@@ -55,5 +59,6 @@ Versions follow a `YYYY.M.D` calendar scheme.
 - `settings.json.example` shipped alongside each binary as a configuration starter.
 - CI workflow (build on push/PR to `main`) and release workflow (publish all RIDs + GitHub Release on `v*` tag).
 
-[Unreleased]: https://github.com/JanusMael/Bennewitz.Ninja.FileServer/compare/v2026.5.15...HEAD
+[Unreleased]: https://github.com/JanusMael/Bennewitz.Ninja.FileServer/compare/v2026.8.18...HEAD
+[2026.8.18]: https://github.com/JanusMael/Bennewitz.Ninja.FileServer/compare/v2026.5.15...v2026.8.18
 [2026.5.15]: https://github.com/JanusMael/Bennewitz.Ninja.FileServer/releases/tag/v2026.5.15
