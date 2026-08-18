@@ -1,0 +1,16 @@
+@page
+@model LoginModel
+@{
+    ViewData["Title"] = "Sign in";
+}
+
+<h1>Sign in</h1>
+
+<p>Any name is accepted. This exists to demonstrate the challenge, not authentication.</p>
+
+<form method="post">
+    <label for="name">Name</label>
+    <input id="name" name="name" value="sample-user" required/>
+    <input type="hidden" name="returnUrl" value="@Model.ReturnUrl"/>
+    <button type="submit">Sign in</button>
+</form>

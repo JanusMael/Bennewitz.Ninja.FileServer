@@ -71,6 +71,9 @@ app.MapFileServer("/private", o => o.RootPath = "/srv/private")
 Call it once per directory to serve several, each with its own extension filter, layout, and
 policy. Full options and behaviour: [package README](src/Bennewitz.Ninja.FileServer/README.md).
 
+A runnable host with four mounts — default styling, a host layout, an extension filter, and one
+behind `RequireAuthorization` — is in [samples/SampleWebApp](samples/README.md).
+
 ---
 
 ## HTTPS

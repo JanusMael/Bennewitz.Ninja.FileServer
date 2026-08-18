@@ -19,3 +19,5 @@ src/**/settings.json
 
 # Publish output
 /publish/dist/
+# Local package feed for testing the component the way a consumer installs it.
+/publish/local-feed/

@@ -57,6 +57,33 @@ tests; removing the download-path extension check should fail
 `Mount_AllowedExtensions_HidesAndRefusesFilteredFiles`. A test that survives its own mutation is
 not protecting anything.
 
+## Testing the package locally
+
+A project reference proves less than it looks: the compiler sees types the package might not
+actually ship. To exercise the component the way a consumer installs it:
+
+```sh
+# Pack into publish/local-feed — a fresh prerelease version each time
+pwsh publish/Pack-Local.ps1
+
+# Run the sample host, which restores from that feed
+dotnet run --project samples/SampleWebApp
+```
+
+`samples/SampleWebApp` mounts the component four times — default styling, inside the host's
+layout, with an extension filter, and behind `RequireAuthorization` — so one run covers the
+claims that matter. See [samples/README.md](samples/README.md).
+
+Two things that will otherwise cost you an afternoon:
+
+- **NuGet caches by id and version.** Re-packing the same version leaves consumers building
+  against the previous bits. `Pack-Local.ps1` stamps a new prerelease each run and evicts the
+  cached copies, so this cannot bite silently.
+- **A prerelease identifier of only digits may not have a leading zero.** SemVer calls it a
+  numeric identifier; NuGet reports the violation as `RestoreTask returned false but did not log
+  an error`, which names neither the version nor the rule. The script's default timestamp is
+  prefixed with a letter for this reason.
+
 ## Publishing a local binary
 
 ```sh

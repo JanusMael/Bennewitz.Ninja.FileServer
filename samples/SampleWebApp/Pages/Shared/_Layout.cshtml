@@ -1,0 +1,48 @@
+@*
+    The host's own chrome. The /docs mount renders inside this layout via LayoutPath, which is
+    why it declares no Razor sections: the component never emits any, and a layout that requires
+    one would throw when the component renders into it.
+*@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>@ViewData["Title"] — Sample</title>
+    <style>
+        :root { color-scheme: light dark; }
+        body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+               margin: 0; line-height: 1.5; }
+        header { display: flex; gap: 1rem; align-items: baseline; flex-wrap: wrap;
+                 padding: .9rem 1.25rem; background: #1f2937; color: #f9fafb; }
+        header a { color: #93c5fd; text-decoration: none; }
+        header a:hover { text-decoration: underline; }
+        header .brand { font-weight: 600; color: #fff; margin-right: .5rem; }
+        header .spacer { flex: 1; }
+        main { padding: 0 .5rem; }
+    </style>
+</head>
+<body>
+<header>
+    <span class="brand">Sample App</span>
+    <a href="/">Home</a>
+    <a href="/files">Files</a>
+    <a href="/docs">Docs</a>
+    <a href="/reports">Reports</a>
+    <a href="/private">Private</a>
+    <span class="spacer"></span>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <span>Signed in as @User.Identity.Name</span>
+        <a href="/Logout">Sign out</a>
+    }
+    else
+    {
+        <a href="/Login">Sign in</a>
+    }
+</header>
+<main>
+    @RenderBody()
+</main>
+</body>
+</html>

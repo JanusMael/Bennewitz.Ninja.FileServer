@@ -1,0 +1,79 @@
+@page
+@{
+    ViewData["Title"] = "Home";
+}
+
+<h1>Bennewitz.Ninja.FileServer — sample host</h1>
+
+<p>
+    Four mounts, each one call to <code>MapFileServer</code>. Every page below is rendered by the
+    package; this application contributes only the header above.
+</p>
+
+<table>
+    <thead>
+    <tr><th>Route</th><th>What it demonstrates</th></tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td><a href="/files">/files</a></td>
+        <td>The default: the component's own self-contained styling, no CSS from this app.</td>
+    </tr>
+    <tr>
+        <td><a href="/docs">/docs</a></td>
+        <td>The same browser rendered inside this app's layout, via <code>LayoutPath</code>.</td>
+    </tr>
+    <tr>
+        <td><a href="/reports">/reports</a></td>
+        <td>
+            <code>AllowedExtensions</code> limited to <code>.csv</code> and <code>.md</code>.
+            <code>notes.txt</code> is in that folder but neither listed nor downloadable —
+            try <a href="/reports/notes.txt">/reports/notes.txt</a>.
+        </td>
+    </tr>
+    <tr>
+        <td><a href="/private">/private</a></td>
+        <td>
+            Behind <code>RequireAuthorization()</code>. The interesting request is the file
+            rather than the listing:
+            <a href="/private/salaries.csv">/private/salaries.csv</a> is challenged too, because
+            files are served from endpoints rather than static-file middleware.
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<p>
+    Signing in accepts any name — it exists to show the challenge and redirect, not to model
+    authentication.
+</p>
+
+<h2>Four mounts, side by side</h2>
+
+<p>
+    All four are live at once in this one application, each with its own root, filter, layout,
+    and policy. Nothing is shared between them: there is no ambient configuration a second mount
+    could inherit or overwrite, because each mount carries its own settings as endpoint metadata.
+</p>
+
+<p>
+    The quickest way to see that they are genuinely separate is a file name that exists in two of
+    them:
+</p>
+
+<ul>
+    <li><a href="/files/shared.txt">/files/shared.txt</a> and <a href="/docs/shared.txt">/docs/shared.txt</a> —
+        same name, different bytes, different mounts.</li>
+    <li><a href="/files/index.md">/files/index.md</a> — 404, because that document belongs to
+        <code>/docs</code>. A mount can only reach inside its own root, so one cannot serve
+        another's files even by guessing the path.</li>
+    <li><a href="/private/shared.csv">/private/shared.csv</a> — a third file of the same family,
+        challenged rather than served while you are signed out.</li>
+</ul>
+
+<p>
+    Registrations that would make this ambiguous are refused while the application starts rather
+    than misbehaving later: two mounts on the same prefix, or a root that sits inside another
+    mount's root — the latter because authorization is applied per route while files live at
+    paths, so overlapping roots would let the weakest policy govern the shared bytes.
+</p>
