@@ -32,7 +32,22 @@ docker run \
   file-server
 ```
 
-HTTP on port 5550 redirects automatically to HTTPS. The container runs as a non-root user; a health check polls `http://localhost:5550/` every 30 seconds.
+HTTP on port 5550 redirects automatically to HTTPS. The container runs as `app` (uid 1654), the
+non-root user the .NET runtime images provide; a health check polls `http://localhost:5550/`
+every 30 seconds.
+
+**Configuring with a file instead of environment variables:**
+```sh
+docker run \
+  -v /host/path/to/files:/data \
+  -v /host/path/to/settings.json:/app/settings.json:ro \
+  -p 5550:5550 \
+  file-server
+```
+
+Settings are read from `/app`, next to the application. Precedence is unchanged inside the
+container: `settings.json`, then environment variables, then any arguments appended to the
+`docker run` command.
 
 To use different external ports, remap them:
 ```sh

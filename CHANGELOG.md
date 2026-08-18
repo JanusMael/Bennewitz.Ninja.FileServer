@@ -10,6 +10,7 @@ Versions follow a `YYYY.M.D` calendar scheme.
 ## [Unreleased]
 
 ### Added
+- CI runs the tests, packs the component, builds the sample against that package, smoke-tests the published binary, and builds and runs the container image. A plain build caught none of the breakages found while assembling this release.
 - Fenced code blocks in rendered Markdown are tokenised, using GitHub's own token classes so the colour-scheme toggle governs code along with the rest of the page. Around two dozen languages are recognised; a fence tagged with anything else keeps its text and loses only the colour. Adds one dependency, `ColorCode.HTML`.
 - `samples/SampleWebApp`, an application that installs the component from a package and mounts it four times — default styling, inside the host's own layout, with an extension filter, and behind `RequireAuthorization` — together with `publish/Pack-Local.ps1`, which packs into a local feed for testing it that way.
 - Test suite for the component: containment (including symlinked leaves and symlinked intermediate directories), the extension filter on both the listing and download paths, prefix normalisation, mount conflict detection, and integration tests proving `RequireAuthorization` covers downloads while the asset endpoint stays anonymous.
@@ -19,6 +20,7 @@ Versions follow a `YYYY.M.D` calendar scheme.
 - Registrations that would make authorization ambiguous now fail while the pipeline is built rather than at request time: a duplicate route prefix, or a root directory that overlaps another mount's root.
 
 ### Changed
+- `--help` prints the build's version, which the contributing guide has always told bug reporters to read from it.
 - The standalone server runs on the component, through the same public API a package consumer uses. Its Bootstrap-based directory formatter and Markdown page are gone, along with the `/view` redirect — a `.md` file now renders at its own URL, with `?raw` serving the source.
 - Listings and rendered Markdown use a self-contained stylesheet whose every class is prefixed `bnfs-`, so the pages look right in a host that brings no CSS and cannot collide with one that brings its own.
 - The Auto / Light / Dark control now themes the whole page rather than only the document body, so a pinned scheme no longer leaves a light document inside dark chrome.

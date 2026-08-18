@@ -6,6 +6,17 @@
 - [PowerShell 7+](https://github.com/PowerShell/PowerShell) (`pwsh`) — for publish scripts
 - [Docker](https://www.docker.com/) — optional, for Docker image testing
 
+## Repository layout
+
+| Path | What it is |
+| --- | --- |
+| `src/Bennewitz.Ninja.FileServer` | The component. A Razor class library packed as the `Bennewitz.Ninja.FileServer` NuGet package; its assembly is named `…​.Hosting` so it can sit beside the executable in one output folder. |
+| `src/Bennewitz.Ninja.FileServer.Cli` | The standalone server. Translates `settings.json`, environment variables, and CLI arguments into one `MapFileServer` call and does nothing the package cannot do. |
+| `tests/Bennewitz.Ninja.FileServer.Tests` | Tests for the component, including the containment rules. |
+| `samples/SampleWebApp` | A host that installs the component **from a package**, not a project reference. Not in the solution: it needs a packed local feed to restore. |
+| `publish/` | Single-file publish per RID, the local package feed, and the boot smoke test. |
+| `docker/` | Both images and their build scripts. |
+
 ## Building and running locally
 
 ```sh
@@ -16,7 +27,9 @@ dotnet run --project src/Bennewitz.Ninja.FileServer.Cli
 dotnet build -c Release
 ```
 
-Create a `settings.json` next to the project (or at the repo root when using `dotnet run`):
+Create a `settings.json` in the CLI project directory. It is copied to the build output, which
+is where the app reads it from — configuration is resolved next to the application, not from the
+working directory:
 
 ```json
 {
@@ -106,7 +119,7 @@ pwsh publish/publish.ps1 -All
 ## Pull requests
 
 1. Fork the repository and create a branch from `main`.
-2. Make your changes; ensure `dotnet build -c Release` passes cleanly.
+2. Make your changes; ensure `dotnet build -c Release` and `dotnet test` both pass cleanly.
 3. Open a pull request against `main` with a clear description of what changed and why.
 
 ## Reporting issues

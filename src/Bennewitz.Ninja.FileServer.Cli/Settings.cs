@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using System.Text.Json;
 
 namespace Bennewitz.Ninja.FileServer;
@@ -25,6 +26,21 @@ public static class Settings
     private static string _moduleDirectory = string.Empty;
     private static IReadOnlySet<string> _allowedExtensions =
         new HashSet<string>(0, StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// The build's version, printed by <c>--help</c> so a bug report can name it.
+    /// </summary>
+    /// <remarks>
+    /// Deliberately not <c>AssemblyInformationalVersion</c>, which is where a version string
+    /// normally lives: the version generator this project uses fills that attribute with the
+    /// decorative "Built with ♥" and puts the real number in the file version. Reading the
+    /// conventional attribute would print the decoration.
+    /// </remarks>
+    private static string Version =>
+        typeof(Settings).Assembly
+            .GetCustomAttribute<AssemblyFileVersionAttribute>()?.Version
+        ?? typeof(Settings).Assembly.GetName().Version?.ToString()
+        ?? "unknown";
 
     /// <summary>
     /// Loads and merges settings from all sources in precedence order:
@@ -421,7 +437,7 @@ public static class Settings
 
     private static void PrintHelp()
     {
-        Console.WriteLine("Bennewitz.Ninja.FileServer — serve a local directory over HTTP/HTTPS");
+        Console.WriteLine($"Bennewitz.Ninja.FileServer {Version} — serve a local directory over HTTP/HTTPS");
         Console.WriteLine();
         Console.WriteLine("Usage:");
         Console.WriteLine("  FileServer [options]");

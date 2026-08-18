@@ -142,7 +142,7 @@ When `AllowedExtensions` is set and `.md` is not included, rendering never comes
 
 Settings are resolved in this order (later sources override earlier ones):
 
-1. `settings.json` — located next to the executable (or the project root when using `dotnet run`)
+1. `settings.json` — located next to the application: beside the executable when published, or in the build output when running with `dotnet run`, where the copy in the project directory lands
 2. Environment variables
 3. Command-line arguments *(highest priority)*
 
@@ -183,6 +183,9 @@ dotnet build -c Debug
 
 # Release build (also produces XML documentation)
 dotnet build -c Release
+
+# Tests
+dotnet test
 
 # Publish the self-contained single-file binary for Linux x64.
 # The CLI project is the executable; the other is the component library it references.
