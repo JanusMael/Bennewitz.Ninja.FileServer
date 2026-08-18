@@ -73,6 +73,17 @@ not at request time: a duplicate prefix, or a root that overlaps another mount's
 | `IncludeDefaultStyles` | `true` | Emit the component's stylesheet and colour-scheme toggle. Set `false` to style the markup yourself. |
 | `CacheControl` | `no-store` | `Cache-Control` sent with served files. |
 
+## Markdown
+
+`.md` files render as HTML, with `?raw` serving the source. Fenced code blocks are tokenised
+into GitHub's own token classes — `pl-k`, `pl-s`, `pl-c` and the rest — which the bundled
+stylesheet already colours, so highlighted code follows the colour-scheme toggle rather than
+carrying colours of its own. Roughly two dozen languages are recognised (`csharp`, `xml`,
+`javascript`, `typescript`, `powershell`, `sql`, `python`, `java`, `cpp`, `json`, `css`, `html`
+and friends); a fence tagged with anything else keeps its text and loses only the colour.
+
+Set `RenderMarkdown = false` to serve `.md` files as bytes like any other file.
+
 ## Using your own layout
 
 ```csharp

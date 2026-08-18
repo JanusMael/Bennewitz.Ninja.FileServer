@@ -63,6 +63,9 @@
 
     <ItemGroup>
         <PackageReference Include="Markdig" Version="1.2.0" />
+        <!-- Tokenises fenced code blocks. Its class names are translated to GitHub's in
+             MarkdownSyntaxHighlighter, so no stylesheet of its own is needed. -->
+        <PackageReference Include="ColorCode.HTML" Version="2.0.15" />
     </ItemGroup>
 
     <ItemGroup>

@@ -27,7 +27,12 @@ public static class FileServerServiceCollectionExtensions
 
         services.TryAddSingleton<FileServerMountRegistry>();
         services.TryAddSingleton<RazorViewRenderer>();
-        services.TryAddSingleton(new MarkdownPipelineBuilder().UseAdvancedExtensions().Build());
+        services.TryAddSingleton(new MarkdownPipelineBuilder()
+            .UseAdvancedExtensions()
+            // Fenced blocks are tokenised into GitHub's own token classes, which the stylesheet
+            // already colours — so code follows the colour-scheme toggle like everything else.
+            .Use<SyntaxHighlightingExtension>()
+            .Build());
 
         services.AddMvcCore()
             .AddRazorViewEngine()

@@ -126,6 +126,12 @@ See [docker/README.md](docker/README.md) for Docker usage, including the standar
 - **Download** — downloads the `.md` file directly.
 - **Auto / Light / Dark** — cycles the colour theme between system default, forced light, and forced dark. The choice is remembered across pages via `localStorage`.
 
+Fenced code blocks are tokenised. A fence tagged with a language the tokeniser knows —
+`csharp`, `xml`, `javascript`, `typescript`, `powershell`, `sql`, `css`, `html`, `json`,
+`python`, `java`, `php`, `cpp`, `fsharp`, `vb.net`, `markdown`, and a handful more — is coloured
+using GitHub's own token palette, so the colour scheme above governs code along with the rest of
+the page. A fence tagged with anything else keeps its text and loses only the colour.
+
 Append `?raw=1` to any `.md` URL to bypass rendering from any client.
 
 When `AllowedExtensions` is set and `.md` is not included, rendering never comes up: `.md` files are hidden from listings and refused on download like any other excluded extension.

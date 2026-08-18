@@ -10,6 +10,7 @@ Versions follow a `YYYY.M.D` calendar scheme.
 ## [Unreleased]
 
 ### Added
+- Fenced code blocks in rendered Markdown are tokenised, using GitHub's own token classes so the colour-scheme toggle governs code along with the rest of the page. Around two dozen languages are recognised; a fence tagged with anything else keeps its text and loses only the colour. Adds one dependency, `ColorCode.HTML`.
 - `samples/SampleWebApp`, an application that installs the component from a package and mounts it four times — default styling, inside the host's own layout, with an extension filter, and behind `RequireAuthorization` — together with `publish/Pack-Local.ps1`, which packs into a local feed for testing it that way.
 - Test suite for the component: containment (including symlinked leaves and symlinked intermediate directories), the extension filter on both the listing and download paths, prefix normalisation, mount conflict detection, and integration tests proving `RequireAuthorization` covers downloads while the asset endpoint stays anonymous.
 - The file browser is installable as a NuGet package, [`Bennewitz.Ninja.FileServer`](https://www.nuget.org/packages/Bennewitz.Ninja.FileServer). `AddFileServer()` plus `MapFileServer("/docs", …)` mounts a browsable, downloadable directory on a route of any ASP.NET Core application; call it once per directory to serve several. Views, styles, and script are compiled or embedded into the assembly, so a host needs no `wwwroot/` and never has to call `UseStaticFiles`.
