@@ -74,7 +74,10 @@ $ErrorActionPreference = 'Stop'
 # $PSScriptRoot is publish/ — the repo root is one level up.
 $repoRoot    = Split-Path $PSScriptRoot -Parent
 $srcRoot     = Join-Path $repoRoot 'src'
-$projectPath = Join-Path $srcRoot 'Bennewitz.Ninja.FileServer' 'Bennewitz.Ninja.FileServer.csproj'
+# The CLI host is the executable. Bennewitz.Ninja.FileServer is now the Razor class
+# library it references — publishing that one fails with NETSDK1099 (single-file
+# publish requires an executable).
+$projectPath = Join-Path $srcRoot 'Bennewitz.Ninja.FileServer.Cli' 'Bennewitz.Ninja.FileServer.Cli.csproj'
 
 # Default dist/log folders under publish/ so repeated runs accumulate in one place.
 if (-not $DistFolder) { $DistFolder = Join-Path $PSScriptRoot 'dist' }
@@ -119,7 +122,7 @@ if (Test-Path $ridFolder) {
 
 # PublishSingleFile=true bundles the executable and all managed DLLs into one file.
 # IncludeNativeLibrariesForSelfExtract=true also bundles native runtime libs (libcoreclr, etc.)
-# so the only files in the archive are the binary and settings.json.
+# so the only files in the archive are the binary and settings.json.example.
 # ReadyToRun pre-compiles hot paths to improve Kestrel startup time.
 # IncrementalBuild=false forces a fresh compilation per RID so the output
 # cannot accidentally reuse another RID's artifacts.
@@ -153,15 +156,33 @@ if (Test-Path $ridFolder) {
     }
 }
 
-# ── Rename settings.json → settings.json.example ─────────────────────────────
-# The app loads settings.json automatically; shipping it under the .example name
-# means the binary starts with no configuration on first run, shows help, and
-# prompts the user to either rename the file or pass --root / set FILE_SERVER_ROOT.
+# ── Ensure the config starter ships as settings.json.example ─────────────────
+# The app loads settings.json automatically; shipping only the .example name means
+# the binary starts with no configuration on first run, shows help, and prompts the
+# user to either rename the file or pass --root / set FILE_SERVER_ROOT.
+#
+# The CLI csproj now publishes settings.json.example directly and never publishes
+# settings.json, so ordinarily the example is already in place and neither branch
+# below runs. They remain as a fallback for a settings.json that reached the output
+# some other way: a developer's settings.json contains machine-specific paths, so the
+# checked-in example always wins rather than being overwritten by a rename.
 $settingsJson    = Join-Path $ridFolder 'settings.json'
 $settingsExample = Join-Path $ridFolder 'settings.json.example'
 if (Test-Path $settingsJson) {
-    Rename-Item -LiteralPath $settingsJson -NewName 'settings.json.example'
-    Write-Host "[$Rid] settings.json → settings.json.example" -ForegroundColor DarkGray
+    if (Test-Path $settingsExample) {
+        Remove-Item -Force -LiteralPath $settingsJson
+        Write-Host "[$Rid] Dropped settings.json (settings.json.example already present)" -ForegroundColor DarkGray
+    }
+    else {
+        Rename-Item -LiteralPath $settingsJson -NewName 'settings.json.example'
+        Write-Host "[$Rid] settings.json → settings.json.example" -ForegroundColor DarkGray
+    }
+}
+
+# The archive is documented as shipping a configuration starter, and the binary's
+# first-run help points at it by name. Say so loudly if it went missing.
+if ($publishExit -eq 0 -and -not (Test-Path $settingsExample)) {
+    Write-Host "[$Rid] WARNING: settings.json.example is missing from the publish output." -ForegroundColor Yellow
 }
 
 # ── Extra distribution files ─────────────────────────────────────────────────

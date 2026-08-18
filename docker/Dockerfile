@@ -24,15 +24,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf 
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
+# Both projects: the CLI host is the executable and references the component library.
 COPY ["src/Bennewitz.Ninja.FileServer/Bennewitz.Ninja.FileServer.csproj", "src/Bennewitz.Ninja.FileServer/"]
-RUN dotnet restore "src/Bennewitz.Ninja.FileServer/Bennewitz.Ninja.FileServer.csproj"
+COPY ["src/Bennewitz.Ninja.FileServer.Cli/Bennewitz.Ninja.FileServer.Cli.csproj", "src/Bennewitz.Ninja.FileServer.Cli/"]
+RUN dotnet restore "src/Bennewitz.Ninja.FileServer.Cli/Bennewitz.Ninja.FileServer.Cli.csproj"
 COPY . .
 WORKDIR "/src/"
-RUN dotnet build "src/Bennewitz.Ninja.FileServer/Bennewitz.Ninja.FileServer.csproj" -c Release -o /app/build
+RUN dotnet build "src/Bennewitz.Ninja.FileServer.Cli/Bennewitz.Ninja.FileServer.Cli.csproj" -c Release -o /app/build
 
 FROM build AS publish
 WORKDIR /src
-RUN dotnet publish "src/Bennewitz.Ninja.FileServer/Bennewitz.Ninja.FileServer.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "src/Bennewitz.Ninja.FileServer.Cli/Bennewitz.Ninja.FileServer.Cli.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app

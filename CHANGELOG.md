@@ -9,6 +9,12 @@ Versions follow a `YYYY.M.D` calendar scheme.
 
 ## [Unreleased]
 
+### Fixed
+- `settings.json.example` is now actually present in the release archives. It has been documented as shipping since 2026.5.15 but never reached the publish output, so the binary's first-run "example configuration file is available at…" hint never appeared.
+- A local `settings.json` is no longer published. Previously a release built on a developer machine shipped that machine-specific file renamed to `settings.json.example`, leaking local paths into the archive.
+- `publish/Publish-Rid.ps1` now publishes the CLI host project. After the library/CLI split it still pointed at the Razor class library, so every release publish failed with `NETSDK1099`.
+- The Docker images build again. Both Dockerfiles restored, built, and published the class library after the split, producing an image whose entry point assembly had no entry point.
+
 ---
 
 ## [2026.5.15] — 2026-05-15
