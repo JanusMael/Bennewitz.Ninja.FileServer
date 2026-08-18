@@ -10,6 +10,7 @@ Versions follow a `YYYY.M.D` calendar scheme.
 ## [Unreleased]
 
 ### Added
+- The release workflow publishes the package to NuGet.org using trusted publishing, so no long-lived API key is stored in the repository. Tagging without the publishing account configured still produces a complete GitHub Release.
 - CI runs the tests, packs the component, builds the sample against that package, smoke-tests the published binary, and builds and runs the container image. A plain build caught none of the breakages found while assembling this release.
 - Fenced code blocks in rendered Markdown are tokenised, using GitHub's own token classes so the colour-scheme toggle governs code along with the rest of the page. Around two dozen languages are recognised; a fence tagged with anything else keeps its text and loses only the colour. Adds one dependency, `ColorCode.HTML`.
 - `samples/SampleWebApp`, an application that installs the component from a package and mounts it four times — default styling, inside the host's own layout, with an extension filter, and behind `RequireAuthorization` — together with `publish/Pack-Local.ps1`, which packs into a local feed for testing it that way.

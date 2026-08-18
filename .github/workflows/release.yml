@@ -7,14 +7,22 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+
     permissions:
+      # Mints the short-lived OIDC token that NuGet/login exchanges for a publish token.
+      # Without it the login step fails with 403.
+      id-token: write
+      # The job also creates the GitHub Release, which needs write. Declaring permissions at
+      # all drops everything not listed, so this cannot be narrowed to read.
       contents: write
 
     env:
-      # Read here rather than in the push step's own `if`, where the secrets context is not
-      # available. An empty value skips the push, so a fork or a repository that has not set
-      # the secret still gets a complete GitHub Release.
-      NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+      # Trusted publishing carries no secret to leak — this is only the nuget.org profile name
+      # the OIDC token is exchanged against. Read at job level so the steps below can test it:
+      # the secrets context is not available in a step's own `if`. Unset means no publish, so a
+      # fork or a repository that has not configured trusted publishing still gets a complete
+      # GitHub Release.
+      NUGET_USER: ${{ secrets.NUGET_USER }}
 
     steps:
       - uses: actions/checkout@v4
@@ -38,12 +46,21 @@ jobs:
         env:
           PublicVersion: ${{ steps.version.outputs.version }}
 
+      # Kept immediately before the push: the token this returns is short-lived, and a slow step
+      # in between is how it expires before it is used.
+      - name: Log in to NuGet.org (OIDC)
+        id: nuget-login
+        if: env.NUGET_USER != ''
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
       - name: Push the package to NuGet.org
-        if: env.NUGET_API_KEY != ''
+        if: env.NUGET_USER != ''
         run: >
           dotnet nuget push "nupkg/*.nupkg"
           --source https://api.nuget.org/v3/index.json
-          --api-key "$NUGET_API_KEY"
+          --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
           --skip-duplicate
 
       - name: Create GitHub Release

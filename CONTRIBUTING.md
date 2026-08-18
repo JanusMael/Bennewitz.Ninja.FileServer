@@ -110,6 +110,44 @@ pwsh publish/publish.ps1
 pwsh publish/publish.ps1 -All
 ```
 
+## Releasing
+
+Versions follow a `YYYY.M.D` calendar scheme, and the tag is the source of truth: the workflow
+passes it in as `PublicVersion`, which becomes both the assembly version and the NuGet package
+version. Nothing needs editing in a `.csproj` to cut a release.
+
+1. Merge to `main`.
+2. Move the `[Unreleased]` entries in `CHANGELOG.md` under a new `## [YYYY.M.D] — YYYY-MM-DD`
+   heading, and update the two link definitions at the bottom of the file.
+3. Tag and push:
+
+   ```sh
+   git tag v2026.8.18
+   git push origin v2026.8.18
+   ```
+
+The `Release` workflow then publishes all six single-file binaries, packs the component, pushes
+it to NuGet.org, and creates the GitHub Release with the archives and the `.nupkg` attached.
+
+### Publishing credentials
+
+Publishing uses [trusted publishing](https://learn.microsoft.com/en-us/nuget/nuget-org/trusted-publishing):
+GitHub mints a short-lived OIDC token that NuGet.org exchanges for a publish token, so there is
+no long-lived API key in the repository to rotate or leak. Two things have to line up:
+
+- A policy at [nuget.org/account/trustedpublishing](https://www.nuget.org/account/trustedpublishing)
+  naming repository owner `JanusMael`, repository `Bennewitz.Ninja.FileServer`, and workflow file
+  `release.yml`. The filename must match exactly — it is how NuGet.org identifies the caller.
+- A repository secret `NUGET_USER` holding the **nuget.org profile name**, not an email address.
+  It is not a credential; it only says which account the token is exchanged against.
+
+Without `NUGET_USER` the push step is skipped and everything else still runs, so tagging from a
+fork — or before the policy exists — produces a complete GitHub Release rather than a failure.
+
+To add an approval gate before anything reaches NuGet.org, create a `release` environment with
+required reviewers, add `environment: release` to the `publish` job, and set the same environment
+name on the nuget.org policy.
+
 ## Code style
 
 - C# uses the existing nullable and implicit-usings settings; match the surrounding style.
