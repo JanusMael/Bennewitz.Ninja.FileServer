@@ -78,8 +78,9 @@ if (-not $Rid) {
 
 # ─── 2. Publish (optional) ────────────────────────────────────────────────────
 $repoRoot    = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
-$projectPath = Join-Path $repoRoot 'src' 'Bennewitz.Ninja.FileServer' 'Bennewitz.Ninja.FileServer.csproj'
-$pubDir      = Join-Path $repoRoot 'src' 'Bennewitz.Ninja.FileServer' 'bin' 'Release' 'net10.0' $Rid 'publish'
+# The CLI host is the executable; the like-named project beside it is the component library.
+$projectPath = Join-Path $repoRoot 'src' 'Bennewitz.Ninja.FileServer.Cli' 'Bennewitz.Ninja.FileServer.Cli.csproj'
+$pubDir      = Join-Path $repoRoot 'src' 'Bennewitz.Ninja.FileServer.Cli' 'bin' 'Release' 'net10.0' $Rid 'publish'
 
 if (-not $SkipPublish) {
     Write-Host "[smoke] publishing $Rid (framework-dependent output, not dist archive)..."

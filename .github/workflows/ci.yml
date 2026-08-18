@@ -22,3 +22,17 @@ jobs:
 
       - name: Build
         run: dotnet build -c Release --no-restore
+
+      - name: Test
+        run: dotnet test -c Release --no-build
+
+      # The package is the shipped artifact for the component, and packing is where the project
+      # graph is validated as NuGet sees it — a build alone would not have caught the id
+      # collision between the library's PackageId and the executable's AssemblyName.
+      - name: Pack
+        run: dotnet pack src/Bennewitz.Ninja.FileServer -c Release --no-build -o nupkg
+
+      # Boot failures do not show up in a build: a missing view, an unregistered service, or a
+      # port that cannot bind all compile perfectly well.
+      - name: Smoke-test the published binary
+        run: pwsh publish/Smoke-Test.ps1

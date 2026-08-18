@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+
+        <!-- The library grants internals to this exact assembly name; containment, the extension
+             filter, and the mount registry are internal and are the parts worth testing directly. -->
+        <AssemblyName>Bennewitz.Ninja.FileServer.Tests</AssemblyName>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <!-- The component is a Razor class library; testing it in a host needs the ASP.NET Core
+             framework reference, which Microsoft.NET.Sdk does not add on its own. -->
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\Bennewitz.Ninja.FileServer\Bennewitz.Ninja.FileServer.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="coverlet.collector" Version="6.0.4" />
+        <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="10.0.8" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+        <PackageReference Include="xunit" Version="2.9.3" />
+        <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="Xunit" />
+    </ItemGroup>
+
+</Project>

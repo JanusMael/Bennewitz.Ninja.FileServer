@@ -25,6 +25,38 @@ Create a `settings.json` next to the project (or at the repo root when using `do
 }
 ```
 
+## Tests
+
+```sh
+# Whole suite
+dotnet test
+
+# One area
+dotnet test --filter FullyQualifiedName~FileServerPathTests
+```
+
+The suite covers the component library. The CLI host has none of its own by design: it
+translates settings into a single `MapFileServer` call, so its behaviour is the component's.
+
+Three things worth knowing before adding to it:
+
+- **Containment tests use the real filesystem.** Whether a path escapes a root is a property of
+  the filesystem, and an abstraction can answer differently from the thing being protected.
+  `TempDirectory` creates and cleans up real directories.
+- **Symlink tests skip themselves where links cannot be created.** `[SymlinkFact]` probes the
+  capability once by trying it; on Windows without Developer Mode or elevation those tests
+  report as skipped rather than failing. Check the skip count before concluding a change is safe.
+- **Refusal tests need a positive twin.** A containment suite that only asserts refusals passes
+  just as well when everything is refused, so each rule has a matching test that something
+  legitimate still works — a traversal that returns inside the root, a sibling directory sharing
+  a name prefix, an unprotected mount served anonymously.
+
+When changing containment or the extension filter, break the rule on purpose and confirm the
+suite goes red before fixing it. Removing link resolution from `FileServerPath` should fail four
+tests; removing the download-path extension check should fail
+`Mount_AllowedExtensions_HidesAndRefusesFilteredFiles`. A test that survives its own mutation is
+not protecting anything.
+
 ## Publishing a local binary
 
 ```sh

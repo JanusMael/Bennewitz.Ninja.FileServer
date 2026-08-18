@@ -10,6 +10,7 @@ Versions follow a `YYYY.M.D` calendar scheme.
 ## [Unreleased]
 
 ### Added
+- Test suite for the component: containment (including symlinked leaves and symlinked intermediate directories), the extension filter on both the listing and download paths, prefix normalisation, mount conflict detection, and integration tests proving `RequireAuthorization` covers downloads while the asset endpoint stays anonymous.
 - The file browser is installable as a NuGet package, [`Bennewitz.Ninja.FileServer`](https://www.nuget.org/packages/Bennewitz.Ninja.FileServer). `AddFileServer()` plus `MapFileServer("/docs", …)` mounts a browsable, downloadable directory on a route of any ASP.NET Core application; call it once per directory to serve several. Views, styles, and script are compiled or embedded into the assembly, so a host needs no `wwwroot/` and never has to call `UseStaticFiles`.
 - `MapFileServer` returns the mount's route group, so `RequireAuthorization()` applied to it covers file downloads as well as listings — files are served from endpoints rather than static-file middleware precisely so that authorization has something to enforce against. The stylesheet endpoint stays anonymous, so an unauthenticated visitor still lands on a styled login page.
 - Per-mount options: `RootPath`, `AllowedExtensions`, `EnableDirectoryBrowsing`, `RenderMarkdown`, `LayoutPath` (render inside a host layout), `IncludeDefaultStyles`, and `CacheControl`. Mounts share no state, so each can have its own filter, layout, and policy.
@@ -30,6 +31,7 @@ Versions follow a `YYYY.M.D` calendar scheme.
 - A local `settings.json` is no longer published. Previously a release built on a developer machine shipped that machine-specific file renamed to `settings.json.example`, leaking local paths into the archive.
 - `publish/Publish-Rid.ps1` now publishes the CLI host project. After the library/CLI split it still pointed at the Razor class library, so every release publish failed with `NETSDK1099`.
 - The Docker images build again. Both Dockerfiles restored, built, and published the class library after the split, producing an image whose entry point assembly had no entry point.
+- `publish/Smoke-Test.ps1` publishes and smokes the CLI host. Like the publish script and the Dockerfiles, it still pointed at the class library after the split, so the smoke could never have found a binary to run.
 - The container image builds again on current .NET runtime images. They ship neither `adduser` nor `useradd`, so creating an unprivileged user failed with exit 127; the build now runs as the non-root `app` user (uid 1654) those images already provide.
 - A `settings.json` bind-mounted at `/app/settings.json` is now read. Settings were resolved next to `Process.MainModule`, which under `dotnet App.dll` is the shared dotnet host, so the container looked in `/usr/share/dotnet` and the mount the image documents had no effect. Resolution is now relative to the application directory, which is also correct for a single-file publish.
 
