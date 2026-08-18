@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
@@ -51,13 +50,14 @@ public static class Settings
             }
         }
 
-        var mainModule = Process.GetCurrentProcess().MainModule
-            ?? throw new InvalidOperationException(
-                "Cannot determine the application directory: Process.MainModule is null.");
-
-        _moduleDirectory = Path.GetDirectoryName(mainModule.FileName)
-            ?? throw new InvalidOperationException(
-                $"Cannot determine the directory containing '{mainModule.FileName}'.");
+        // The application's own directory, not the host process's. Process.MainModule names
+        // whatever executable the OS launched, which under `dotnet App.dll` is the shared dotnet
+        // host: in a container that made this /usr/share/dotnet, so settings.json was looked for
+        // there and the `-v ./settings.json:/app/settings.json` mount the image documents never
+        // took effect. AppContext.BaseDirectory is the app's directory in every deployment model,
+        // including a single-file publish, where it is the folder holding the executable rather
+        // than the extraction directory.
+        _moduleDirectory = AppContext.BaseDirectory;
 
         var path = Path.Combine(_moduleDirectory, "settings.json");
 

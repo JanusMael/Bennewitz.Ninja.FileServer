@@ -30,6 +30,8 @@ Versions follow a `YYYY.M.D` calendar scheme.
 - A local `settings.json` is no longer published. Previously a release built on a developer machine shipped that machine-specific file renamed to `settings.json.example`, leaking local paths into the archive.
 - `publish/Publish-Rid.ps1` now publishes the CLI host project. After the library/CLI split it still pointed at the Razor class library, so every release publish failed with `NETSDK1099`.
 - The Docker images build again. Both Dockerfiles restored, built, and published the class library after the split, producing an image whose entry point assembly had no entry point.
+- The container image builds again on current .NET runtime images. They ship neither `adduser` nor `useradd`, so creating an unprivileged user failed with exit 127; the build now runs as the non-root `app` user (uid 1654) those images already provide.
+- A `settings.json` bind-mounted at `/app/settings.json` is now read. Settings were resolved next to `Process.MainModule`, which under `dotnet App.dll` is the shared dotnet host, so the container looked in `/usr/share/dotnet` and the mount the image documents had no effect. Resolution is now relative to the application directory, which is also correct for a single-file publish.
 
 ---
 

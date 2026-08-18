@@ -38,9 +38,9 @@ RUN dotnet publish "src/Bennewitz.Ninja.FileServer.Cli/Bennewitz.Ninja.FileServe
 
 FROM base AS final
 WORKDIR /app
-# Run as unprivileged user — the app is read-only and needs no home directory
-RUN adduser --disabled-password --no-create-home appuser
-USER appuser
+# Run as the non-root `app` user (uid 1654) that the .NET runtime images already provide.
+# Creating one here is not portable: these images ship neither adduser nor useradd.
+USER app
 COPY --from=publish /app/publish .
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD curl -sf http://localhost:5550/ || exit 1
