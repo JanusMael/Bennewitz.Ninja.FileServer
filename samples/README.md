@@ -29,7 +29,7 @@ dotnet run --project samples/SampleWebApp -p:FileServerVersion=2026.8.18
 
 | Route | Configuration | What to look at |
 | --- | --- | --- |
-| `/files` | defaults | The component's own styling, in an app that contributes no CSS to that page. Open `readme.md`: four fenced blocks, three of them tokenised and one in a language the tokeniser does not know. Cycle **Auto / Light / Dark** and watch the code re-colour with the page. |
+| `/files` | defaults | The component's own styling, in an app that contributes no CSS to that page. Open `readme.md`: four fenced blocks, three of them tokenised and one in a language the tokeniser does not know. Cycle **Auto / Light / Dark** and watch the code re-colour with the page — then go back to the listing, which carries the same control and keeps the scheme you picked. |
 | `/docs` | `LayoutPath` | The same browser rendered inside this app's layout — the dark header is the host's, everything below it is the package's. |
 | `/reports` | `AllowedExtensions` | `notes.txt` is on disk but absent from the listing, and `/reports/notes.txt` is refused. The filter governs downloads, not just display. |
 | `/private` | `RequireAuthorization()` + `LayoutPath` | Request `/private/salaries.csv` while signed out. The challenge lands on the *file*, and signing in returns you to it. |

@@ -75,7 +75,9 @@ not at request time: a duplicate prefix, or a root that overlaps another mount's
 
 ## Markdown
 
-`.md` files render as HTML, with `?raw` serving the source. Fenced code blocks are tokenised
+`.md` files render as HTML, with `?raw` serving the source. Listings and documents alike carry an
+Auto / Light / Dark control that pins a colour scheme against the reader's system preference,
+remembered under one key so it holds across both. Fenced code blocks are tokenised
 into GitHub's own token classes — `pl-k`, `pl-s`, `pl-c` and the rest — which the bundled
 stylesheet already colours, so highlighted code follows the colour-scheme toggle rather than
 carrying colours of its own. Roughly two dozen languages are recognised (`csharp`, `xml`,

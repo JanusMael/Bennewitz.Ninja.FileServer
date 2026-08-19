@@ -124,7 +124,11 @@ See [docker/README.md](docker/README.md) for Docker usage, including the standar
 
 - **View raw** — opens the raw Markdown source in the browser.
 - **Download** — downloads the `.md` file directly.
-- **Auto / Light / Dark** — cycles the colour theme between system default, forced light, and forced dark. The choice is remembered across pages via `localStorage`.
+- **Auto / Light / Dark** — cycles the colour theme between system default, forced light, and forced dark.
+
+Directory listings carry the same **Auto / Light / Dark** control, beside the **↑ Up** link. Both
+pages remember the choice under one key, so a pinned scheme holds while browsing rather than
+reverting whenever you leave a document.
 
 Fenced code blocks are tokenised. A fence tagged with a language the tokeniser knows —
 `csharp`, `xml`, `javascript`, `typescript`, `powershell`, `sql`, `css`, `html`, `json`,

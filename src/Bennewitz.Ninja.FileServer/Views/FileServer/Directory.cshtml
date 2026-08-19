@@ -32,10 +32,22 @@
             }
         </ol>
 
-        @if (Model.ParentUrl is not null)
+        @if (Model.ParentUrl is not null || Model.ScriptUrl is not null)
         {
             <div class="bnfs-actions">
-                <a class="bnfs-btn" href="@Model.ParentUrl">Up</a>
+                @if (Model.ParentUrl is not null)
+                {
+                    @* U+2191, not U+2B06: the latter takes emoji presentation on some platforms
+                       and would render in colour against a monochrome button. Decorative beside
+                       the word, so hidden from assistive technology rather than announced. *@
+                    <a class="bnfs-btn" href="@Model.ParentUrl"><span class="bnfs-btn-icon" aria-hidden="true">&#8593;</span>Up</a>
+                }
+                @if (Model.ScriptUrl is not null)
+                {
+                    @* Same control and same remembered choice as the Markdown view, so the
+                       scheme does not change as you move between a listing and a document. *@
+                    <button type="button" class="bnfs-btn" data-bnfs-theme-toggle>Auto</button>
+                }
             </div>
         }
     </div>
@@ -70,6 +82,11 @@
         </table>
     }
 </div>
+
+@if (Model.ScriptUrl is not null)
+{
+    <script src="@Model.ScriptUrl"></script>
+}
 
 @functions {
     private static string FormatSize(long? bytes)

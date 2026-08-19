@@ -197,6 +197,58 @@ public sealed class MountRequestTests
     }
 
     [Fact]
+    public async Task Listing_DefaultStyles_EmitsTheToggleAndItsScript()
+    {
+        using var root = new TempDirectory();
+        root.WriteFile("notes.md", "# Heading");
+
+        await using var host = await StartAsync(root);
+
+        var html = await host.Client.GetStringAsync("/docs");
+
+        // The listing carries the same control as a document, so a pinned scheme survives
+        // navigating between the two rather than reverting on every listing.
+        Assert.Contains("data-bnfs-theme-toggle", html, StringComparison.Ordinal);
+        Assert.Contains("fileserver.js", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Listing_AtMountRoot_StillEmitsTheToggleWithNoUpLink()
+    {
+        using var root = new TempDirectory();
+        root.WriteFile("notes.md", "# Heading");
+
+        await using var host = await StartAsync(root);
+
+        var html = await host.Client.GetStringAsync("/docs");
+
+        // The actions row exists only when it has something in it, and at the root the Up link
+        // is absent — the toggle must not disappear with it.
+        Assert.Contains("data-bnfs-theme-toggle", html, StringComparison.Ordinal);
+        Assert.DoesNotContain(">Up</a>", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Listing_IncludeDefaultStylesDisabled_EmitsNoToggle()
+    {
+        using var root = new TempDirectory();
+        root.WriteFile("notes.md", "# Heading");
+
+        await using var host = await FileServerTestHost.StartAsync(endpoints =>
+            endpoints.MapFileServer("/docs", o =>
+            {
+                o.RootPath = root.Path;
+                o.IncludeDefaultStyles = false;
+            }));
+
+        var html = await host.Client.GetStringAsync("/docs");
+
+        Assert.DoesNotContain("data-bnfs-theme-toggle", html, StringComparison.Ordinal);
+        Assert.DoesNotContain("fileserver.js", html, StringComparison.Ordinal);
+        Assert.Contains("bnfs-table", html, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Mount_CustomCacheControl_IsSentWithFiles()
     {
         using var root = new TempDirectory();

@@ -16,6 +16,21 @@
     --bnfs-head: #f8f9fa;
     --bnfs-accent: #0969da;
 
+    /*
+     * No monospace face is present on every machine, so this names a floor for each platform
+     * rather than a favourite. Order: an opinionated face for anyone who installed one, then
+     * ui-monospace (the platform's own UI mono — SF Mono on Apple; unsupported elsewhere, where
+     * it is skipped without harming the rest of the list), then the safe bet per platform, then
+     * the generic. Windows has shipped Consolas since Vista and macOS Menlo since 10.6; Linux
+     * guarantees nothing, so the three most widely packaged names are listed before the generic.
+     *
+     * The no-ligature variants are named ahead of their siblings on purpose — see the ligature
+     * note on .bnfs-table.
+     */
+    --bnfs-mono: "JetBrains Mono NL", "JetBrains Mono", ui-monospace, "SF Mono", "Cascadia Mono",
+                 "Segoe UI Mono", "Roboto Mono", Menlo, Consolas, "DejaVu Sans Mono",
+                 "Liberation Mono", "Noto Sans Mono", monospace;
+
     color: var(--bnfs-fg);
     background: var(--bnfs-bg);
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -23,7 +38,7 @@
     line-height: 1.5;
     max-width: 1100px;
     margin: 0 auto;
-    padding: 1.25rem 1rem 2.5rem;
+    padding: 1rem 1rem 2.5rem;
     box-sizing: border-box;
 }
 
@@ -54,8 +69,8 @@
     gap: .75rem;
     align-items: center;
     justify-content: space-between;
-    padding-bottom: .6rem;
-    margin-bottom: 1rem;
+    padding-bottom: .45rem;
+    margin-bottom: .65rem;
     border-bottom: 1px solid var(--bnfs-border);
 }
 
@@ -91,13 +106,33 @@
     text-decoration: none;
 }
 
+/* `.bnfs-root a` (0,2,0) outranks `.bnfs-btn` (0,1,0), so a link styled as a button would take
+   the accent colour while a real <button> beside it took the foreground — two controls in one
+   row looking like different things. The accent stays reserved for navigable content: file names
+   and breadcrumbs. */
+.bnfs-root a.bnfs-btn { color: var(--bnfs-fg); }
+
 .bnfs-btn:hover { background: var(--bnfs-hover); text-decoration: none; }
+
+/* Matches the muting on row icons, so the glyph reads as an affordance rather than a character
+   in the label. Sized in em so it tracks the button text. */
+.bnfs-btn-icon { opacity: .7; margin-right: .3em; font-size: 1.05em; line-height: 1; }
 
 /* ---- listing --------------------------------------------------------- */
 
 .bnfs-table {
+    /*
+     * Ligatures off across the listing. A file name is an exact string, and every font family
+     * has some pair it wants to fuse: programming faces join -> != >= === , and ordinary text
+     * faces join fi fl ffi. Either way the page would be showing something the filesystem does
+     * not contain, so it is suppressed for the whole table rather than per column.
+     */
+    font-variant-ligatures: none;
     width: 100%;
     border-collapse: collapse;
+    /* Tighter than the page's 1.5: rows are scanned, and inherited prose leading was adding
+       more height per row than the cell padding did. */
+    line-height: 1.35;
     border: 1px solid var(--bnfs-border);
     border-radius: 6px;
     overflow: hidden;
@@ -106,7 +141,7 @@
 .bnfs-table th,
 .bnfs-table td {
     text-align: left;
-    padding: .45rem .75rem;
+    padding: .3rem .75rem;
     border-bottom: 1px solid var(--bnfs-border);
     white-space: nowrap;
 }
@@ -124,8 +159,20 @@
 .bnfs-table tbody tr:hover { background: var(--bnfs-hover); }
 
 .bnfs-name { width: 100%; white-space: normal; word-break: break-word; }
+/*
+ * The only columns set in monospace. Digits then share one advance width, so sizes and dates line
+ * up down the column by construction — which is what these two columns are for. Names stay in the
+ * page's own face: proportional type reads better and fits more of a long name before wrapping.
+ * tabular-nums is kept for the case where the stack falls all the way through to a face whose
+ * figures are proportional.
+ */
 .bnfs-size,
-.bnfs-date { color: var(--bnfs-muted); font-variant-numeric: tabular-nums; font-size: .9rem; }
+.bnfs-date {
+    font-family: var(--bnfs-mono);
+    color: var(--bnfs-muted);
+    font-variant-numeric: tabular-nums;
+    font-size: .85rem;
+}
 
 .bnfs-icon { display: inline-block; width: 1.25rem; opacity: .75; }
 
