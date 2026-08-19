@@ -107,5 +107,13 @@
         <!-- Shown on the package page; scoped to consuming the library, while the repository
              README leads with the standalone server. -->
         <None Include="README.md" Pack="true" PackagePath="\" />
+
+        <!--
+          The package embeds a vendored copy of github-markdown-css, whose MIT licence requires
+          the copyright and permission notice to travel with substantial portions of the work.
+          Anyone redistributing this package redistributes that stylesheet, so the notice ships
+          inside the package rather than only living in the repository.
+        -->
+        <None Include="..\..\THIRD-PARTY-NOTICES.md" Pack="true" PackagePath="\" />
     </ItemGroup>
 </Project>
