@@ -7,11 +7,12 @@
         <IsPackable>false</IsPackable>
 
         <!--
-          Floats to the newest local prerelease, so re-running publish/Pack-Local.ps1 is enough to
-          test a change — no version to edit here between iterations. Pin it to a real version
-          (`-p:FileServerVersion=2026.8.18`) to check the sample against a published package.
+          Defaults to the newest published release, so a fresh clone runs without packing anything
+          first. Override it to test an unreleased build — `publish/Pack-Local.ps1` prints the
+          version it produced, and CI passes the version it just packed, which is the only way the
+          sample verifies the package built in that run rather than the one on nuget.org.
         -->
-        <FileServerVersion Condition="'$(FileServerVersion)' == ''">*-*</FileServerVersion>
+        <FileServerVersion Condition="'$(FileServerVersion)' == ''">2026.8.18</FileServerVersion>
     </PropertyGroup>
 
     <ItemGroup>
@@ -19,10 +20,10 @@
           A PackageReference on purpose, not a ProjectReference. The point of this sample is to
           prove the package carries everything a host needs: compiled views, embedded styles and
           script, and its own dependencies. A project reference would let the compiler see types
-          that the package might not actually ship.
+          the package might not actually ship, which is exactly the failure this is meant to catch.
 
-          Restore therefore needs the local feed populated first:
-              pwsh publish/Pack-Local.ps1
+          The version comes from the property above so an override reaches it. Hardcoding it here
+          leaves the property dead and the override silently ignored.
         -->
         <PackageReference Include="Bennewitz.Ninja.FileServer" Version="$(FileServerVersion)" />
     </ItemGroup>
