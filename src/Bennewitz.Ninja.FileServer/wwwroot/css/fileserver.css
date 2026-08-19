@@ -186,6 +186,9 @@
  * level and dark inside a prefers-color-scheme block. Neither can be reused for a pinned
  * scheme, so both sets are restated here — the same approach as GitHub's own single-scheme
  * builds. Updating the vendored stylesheet means revisiting these two blocks.
+ *
+ * The values below are reproduced from github-markdown-css (MIT, Copyright (c) Sindre Sorhus).
+ * See THIRD-PARTY-NOTICES.md.
  */
 
 .bnfs-root[data-bnfs-theme="light"] .bnfs-markdown {

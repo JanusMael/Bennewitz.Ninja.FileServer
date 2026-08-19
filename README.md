@@ -209,3 +209,5 @@ Set `ASPNETCORE_ENVIRONMENT=Development` to enable detailed error pages. Configu
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+The rendered-Markdown styling is [github-markdown-css](https://github.com/sindresorhus/github-markdown-css) by Sindre Sorhus, vendored and embedded in the binary under its MIT licence. Its notice, and any other third-party material shipped inside this software, is reproduced in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).

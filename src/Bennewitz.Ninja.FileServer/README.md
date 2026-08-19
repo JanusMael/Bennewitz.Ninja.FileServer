@@ -116,4 +116,6 @@ support. See the [repository](https://github.com/JanusMael/Bennewitz.Ninja.FileS
 
 ## License
 
-MIT
+MIT.
+
+This package embeds [github-markdown-css](https://github.com/sindresorhus/github-markdown-css) by Sindre Sorhus for rendered-Markdown styling, used under its MIT licence. The notice travels inside the package as `THIRD-PARTY-NOTICES.md`.

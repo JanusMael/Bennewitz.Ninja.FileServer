@@ -9,6 +9,9 @@ Versions follow a `YYYY.M.D` calendar scheme.
 
 ## [Unreleased]
 
+### Fixed
+- The MIT notice for [github-markdown-css](https://github.com/sindresorhus/github-markdown-css), vendored and embedded in the assembly, now ships with every form the software is distributed in: `THIRD-PARTY-NOTICES.md` is packed into the NuGet package, copied into each release archive alongside `LICENSE`, and copied into both container images. Its licence requires the notice to travel with substantial portions of the work, and nothing carried it before. CI asserts the image still has it.
+
 ---
 
 ## [2026.8.18] — 2026-08-18

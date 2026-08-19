@@ -42,6 +42,10 @@ WORKDIR /app
 # Creating one here is not portable: these images ship neither adduser nor useradd.
 USER app
 COPY --from=publish /app/publish .
+# The image ships a binary that embeds a vendored MIT-licensed stylesheet, and an image is a
+# redistribution like any other, so the notice travels with it. LICENSE and README stay out of
+# the build context by .dockerignore; this file is not excluded.
+COPY THIRD-PARTY-NOTICES.md ./
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD curl -sf http://localhost:5550/ || exit 1
 ENTRYPOINT ["dotnet", "Bennewitz.Ninja.FileServer.dll"]
