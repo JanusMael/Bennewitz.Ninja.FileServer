@@ -9,6 +9,10 @@ Versions follow a `YYYY.M.D` calendar scheme.
 
 ## [Unreleased]
 
+---
+
+## [2026.8.19] — 2026-08-19
+
 ### Added
 - Directory listings carry the Auto / Light / Dark control that documents already had, and both remember the choice under one key — a pinned scheme holds while browsing instead of reverting on every listing.
 
@@ -72,6 +76,7 @@ Versions follow a `YYYY.M.D` calendar scheme.
 - `settings.json.example` shipped alongside each binary as a configuration starter.
 - CI workflow (build on push/PR to `main`) and release workflow (publish all RIDs + GitHub Release on `v*` tag).
 
-[Unreleased]: https://github.com/JanusMael/Bennewitz.Ninja.FileServer/compare/v2026.8.18...HEAD
+[Unreleased]: https://github.com/JanusMael/Bennewitz.Ninja.FileServer/compare/v2026.8.19...HEAD
+[2026.8.19]: https://github.com/JanusMael/Bennewitz.Ninja.FileServer/compare/v2026.8.18...v2026.8.19
 [2026.8.18]: https://github.com/JanusMael/Bennewitz.Ninja.FileServer/compare/v2026.5.15...v2026.8.18
 [2026.5.15]: https://github.com/JanusMael/Bennewitz.Ninja.FileServer/releases/tag/v2026.5.15

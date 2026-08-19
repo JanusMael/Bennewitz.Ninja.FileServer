@@ -129,6 +129,14 @@ version. Nothing needs editing in a `.csproj` to cut a release.
 The `Release` workflow then publishes all six single-file binaries, packs the component, pushes
 it to NuGet.org, and creates the GitHub Release with the archives and the `.nupkg` attached.
 
+4. Once the package is live on NuGet.org, bump the `FileServerVersion` default in
+   `samples/SampleWebApp/SampleWebApp.csproj` to the version just released.
+
+That last step comes *after* the publish, not with the cut. The default has to name a version that
+exists: bumping it in the release commit would leave `main` restoring a package that has not been
+pushed yet, and a fresh clone of the sample would fail to build for as long as that took. One
+version behind is harmless; pointing at a version that does not exist is not.
+
 ### Publishing credentials
 
 Publishing uses [trusted publishing](https://learn.microsoft.com/en-us/nuget/nuget-org/trusted-publishing):
