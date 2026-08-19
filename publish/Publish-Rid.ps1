@@ -196,6 +196,19 @@ if ($publishExit -eq 0 -and (Test-Path $ridFolder)) {
         Copy-Item -LiteralPath $readmeSrc -Destination $ridFolder
     }
 
+    # The binary embeds a vendored copy of github-markdown-css, whose MIT licence requires its
+    # notice to travel with the work. The project's own licence ships for the same reason: an
+    # archive is a redistribution, and it should say what it is and what it contains.
+    foreach ($name in @('LICENSE', 'THIRD-PARTY-NOTICES.md')) {
+        $src = Join-Path $repoRoot $name
+        if (Test-Path $src) {
+            Copy-Item -LiteralPath $src -Destination $ridFolder
+        }
+        else {
+            Write-Host "[$Rid] WARNING: $name is missing from the repository root." -ForegroundColor Yellow
+        }
+    }
+
     $dockerSrc = Join-Path $repoRoot 'docker'
     $dockerDst = Join-Path $ridFolder 'docker'
     New-Item -ItemType Directory -Path $dockerDst -Force | Out-Null

@@ -196,6 +196,7 @@ public static class FileServerEndpointRouteBuilderExtensions
             Title = path.Length == 0 ? mount.Prefix.TrimStart('/') : path,
             Breadcrumbs = BuildCrumbs(http, mount, path, includeLeaf: true),
             StylesheetUrl = AssetUrl(http, mount, "css/fileserver.css"),
+            ScriptUrl = AssetUrl(http, mount, "js/fileserver.js"),
             Entries = entries,
             ParentUrl = path.Length == 0
                 ? null

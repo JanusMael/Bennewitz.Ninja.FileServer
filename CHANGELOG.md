@@ -9,6 +9,19 @@ Versions follow a `YYYY.M.D` calendar scheme.
 
 ## [Unreleased]
 
+### Added
+- Directory listings carry the Auto / Light / Dark control that documents already had, and both remember the choice under one key — a pinned scheme holds while browsing instead of reverting on every listing.
+
+### Changed
+- Listings are vertically tighter. The table sets its own leading rather than inheriting the page's prose line-height, which was adding more height per row than the cell padding was; rows are about a fifth shorter and the header sits closer to the listing it labels.
+- The parent-directory link carries an up arrow, as file managers do. U+2191 rather than U+2B06, which takes emoji presentation on some platforms and would render in colour against a monochrome button.
+- Sizes and modified times are set in monospace so figures line up down the column by construction, while names and headers keep the page's own face — proportional type reads better and fits more of a long name before it wraps. The stack names a floor per platform rather than a favourite, since no monospace face is present everywhere: Consolas has shipped with Windows since Vista and Menlo with macOS since 10.6, while Linux guarantees nothing.
+- Ligatures are disabled across the listing. Every font family has some pair it wants to fuse — programming faces join `->` `!=` `>=`, ordinary text faces join `fi` `fl` — and a file name is an exact string, so the listing should not render one the filesystem does not contain.
+- Buttons in an action row share one colour. A link styled as a button took the accent colour while a real button beside it took the foreground, so two controls in the same row looked like different kinds of thing. The accent is now reserved for navigable content: file names and breadcrumbs.
+
+### Fixed
+- The MIT notice for [github-markdown-css](https://github.com/sindresorhus/github-markdown-css), vendored and embedded in the assembly, now ships with every form the software is distributed in: `THIRD-PARTY-NOTICES.md` is packed into the NuGet package, copied into each release archive alongside `LICENSE`, and copied into both container images. Its licence requires the notice to travel with substantial portions of the work, and nothing carried it before. CI asserts the image still has it.
+
 ---
 
 ## [2026.8.18] — 2026-08-18
