@@ -12,18 +12,22 @@ through a project reference that would let the compiler see types the package mi
 # 1. Pack the component into publish/local-feed (gitignored)
 pwsh publish/Pack-Local.ps1
 
-# 2. Run the sample — it restores the newest local prerelease from that feed
+# 2. Run the sample against that build — Pack-Local.ps1 prints the version it produced
+dotnet run --project samples/SampleWebApp -p:FileServerVersion=2026.8.19-local.t1530
+```
+
+Then open <http://localhost:5000>. Iterating on the component means repeating both steps: each
+pack gets a fresh version, and the flag is what points the sample at it.
+
+Run it with no flag at all to see the newest published release instead:
+
+```sh
 dotnet run --project samples/SampleWebApp
 ```
 
-Then open <http://localhost:5000>. Iterating on the component means re-running step 1: each pack
-gets a fresh version, and the sample's floating `*-*` reference picks it up.
-
-To check the sample against a published package instead:
-
-```sh
-dotnet run --project samples/SampleWebApp -p:FileServerVersion=2026.8.18
-```
+That is the default so a fresh clone runs without packing anything first. It also means a plain
+run shows the component as shipped, not as it stands in your working tree — which is the trap the
+flag exists to avoid.
 
 ### What each mount demonstrates
 
