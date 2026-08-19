@@ -76,12 +76,16 @@ A project reference proves less than it looks: the compiler sees types the packa
 actually ship. To exercise the component the way a consumer installs it:
 
 ```sh
-# Pack into publish/local-feed — a fresh prerelease version each time
+# Pack into publish/local-feed — a fresh prerelease version each time, and it prints the version
 pwsh publish/Pack-Local.ps1
 
-# Run the sample host, which restores from that feed
-dotnet run --project samples/SampleWebApp
+# Run the sample against that build rather than the published one
+dotnet run --project samples/SampleWebApp -p:FileServerVersion=2026.8.19-local.t1530
 ```
+
+Without the override the sample restores the newest published release, so a fresh clone runs
+without packing anything first. Testing an unreleased component means naming its version — the
+flag is what makes the sample prove the build in front of you rather than the one on NuGet.org.
 
 `samples/SampleWebApp` mounts the component four times — default styling, inside the host's
 layout, with an extension filter, and behind `RequireAuthorization` — so one run covers the
@@ -122,8 +126,8 @@ version. Nothing needs editing in a `.csproj` to cut a release.
 3. Tag and push:
 
    ```sh
-   git tag v2026.8.18
-   git push origin v2026.8.18
+   git tag v2026.8.19
+   git push origin v2026.8.19
    ```
 
 The `Release` workflow then publishes all six single-file binaries, packs the component, pushes

@@ -12,7 +12,7 @@
           version it produced, and CI passes the version it just packed, which is the only way the
           sample verifies the package built in that run rather than the one on nuget.org.
         -->
-        <FileServerVersion Condition="'$(FileServerVersion)' == ''">2026.8.18</FileServerVersion>
+        <FileServerVersion Condition="'$(FileServerVersion)' == ''">2026.8.19</FileServerVersion>
     </PropertyGroup>
 
     <ItemGroup>
