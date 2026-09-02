@@ -9,6 +9,10 @@ Versions follow a `YYYY.M.D` calendar scheme.
 
 ## [Unreleased]
 
+---
+
+## [2026.9.2] — 2026-09-02
+
 ### Fixed
 - `AllowedExtensions` accepts an extension written without its leading dot. Configured with `txt` rather than `.txt`, a mount used to register without complaint and then serve nothing at all — matching compares against `Path.GetExtension`, which always returns the dotted form, so the filter could never match anything. The library now normalises the set when the mount is registered, exactly as the CLI has always done for its own configuration, and both surfaces share one normaliser rather than disagreeing about whether the dot is required. ([#6](https://github.com/JanusMael/Bennewitz.Ninja.FileServer/issues/6))
 
@@ -79,7 +83,8 @@ Versions follow a `YYYY.M.D` calendar scheme.
 - `settings.json.example` shipped alongside each binary as a configuration starter.
 - CI workflow (build on push/PR to `main`) and release workflow (publish all RIDs + GitHub Release on `v*` tag).
 
-[Unreleased]: https://github.com/JanusMael/Bennewitz.Ninja.FileServer/compare/v2026.8.19...HEAD
+[Unreleased]: https://github.com/JanusMael/Bennewitz.Ninja.FileServer/compare/v2026.9.2...HEAD
+[2026.9.2]: https://github.com/JanusMael/Bennewitz.Ninja.FileServer/compare/v2026.8.19...v2026.9.2
 [2026.8.19]: https://github.com/JanusMael/Bennewitz.Ninja.FileServer/compare/v2026.8.18...v2026.8.19
 [2026.8.18]: https://github.com/JanusMael/Bennewitz.Ninja.FileServer/compare/v2026.5.15...v2026.8.18
 [2026.5.15]: https://github.com/JanusMael/Bennewitz.Ninja.FileServer/releases/tag/v2026.5.15
