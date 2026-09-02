@@ -66,7 +66,7 @@ not at request time: a duplicate prefix, or a root that overlaps another mount's
 | Option | Default | Purpose |
 | --- | --- | --- |
 | `RootPath` | *(required)* | Absolute path of the directory to serve. Must exist at startup. |
-| `AllowedExtensions` | *(empty — all files)* | Extensions that may be listed **and** downloaded, e.g. `.pdf`. Applied on both paths. |
+| `AllowedExtensions` | *(empty — all files)* | Extensions that may be listed **and** downloaded, e.g. `.pdf`. The leading dot is optional — `pdf` and `.pdf` are equivalent. An empty string matches files with no extension. Applied on both paths. |
 | `EnableDirectoryBrowsing` | `true` | When `false`, directories 404 while direct file downloads still work. |
 | `RenderMarkdown` | `true` | When `false`, `.md` files are served as raw bytes. |
 | `LayoutPath` | `null` | A host layout to render inside, e.g. `/Views/Shared/_Layout.cshtml`. Defaults to the component's own self-contained layout. |

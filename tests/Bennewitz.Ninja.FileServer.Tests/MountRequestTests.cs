@@ -150,6 +150,57 @@ public sealed class MountRequestTests
     }
 
     [Fact]
+    public async Task Mount_AllowedExtensionsWithoutLeadingDot_BehavesLikeTheDottedForm()
+    {
+        using var root = new TempDirectory();
+        root.WriteFile("readme.md", "# shown");
+        root.WriteFile("hello.txt", "hidden");
+
+        // No leading dot. Path.GetExtension always yields the dotted form, so before the filter
+        // was normalised this matched nothing: the mount registered cleanly, listed nothing, and
+        // 404'd every file including the ones it was configured to allow.
+        await using var host = await FileServerTestHost.StartAsync(endpoints =>
+            endpoints.MapFileServer("/docs", o =>
+            {
+                o.RootPath = root.Path;
+                o.AllowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "md" };
+            }));
+
+        var listing = await host.Client.GetStringAsync("/docs");
+
+        Assert.Contains("readme.md", listing, StringComparison.Ordinal);
+        Assert.DoesNotContain("hello.txt", listing, StringComparison.Ordinal);
+
+        var allowed = await host.Client.GetAsync("/docs/readme.md");
+        var refused = await host.Client.GetAsync("/docs/hello.txt");
+
+        Assert.Equal(HttpStatusCode.OK, allowed.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, refused.StatusCode);
+    }
+
+    [Fact]
+    public async Task Mount_AllowedExtensions_DoesNotMutateTheCallersSet()
+    {
+        using var root = new TempDirectory();
+        root.WriteFile("readme.md", "# shown");
+
+        var callersSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "md" };
+
+        await using var host = await FileServerTestHost.StartAsync(endpoints =>
+            endpoints.MapFileServer("/docs", o =>
+            {
+                o.RootPath = root.Path;
+                o.AllowedExtensions = callersSet;
+            }));
+
+        _ = await host.Client.GetStringAsync("/docs");
+
+        // Normalising by replacing the set, not by editing it: the caller may hold this instance
+        // for its own purposes, and a mount is not entitled to rewrite it.
+        Assert.Equal(new[] { "md" }, callersSet);
+    }
+
+    [Fact]
     public async Task Mount_MissingFile_IsNotFound()
     {
         using var root = new TempDirectory();
