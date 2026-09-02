@@ -9,6 +9,9 @@ Versions follow a `YYYY.M.D` calendar scheme.
 
 ## [Unreleased]
 
+### Fixed
+- `AllowedExtensions` accepts an extension written without its leading dot. Configured with `txt` rather than `.txt`, a mount used to register without complaint and then serve nothing at all — matching compares against `Path.GetExtension`, which always returns the dotted form, so the filter could never match anything. The library now normalises the set when the mount is registered, exactly as the CLI has always done for its own configuration, and both surfaces share one normaliser rather than disagreeing about whether the dot is required. ([#6](https://github.com/JanusMael/Bennewitz.Ninja.FileServer/issues/6))
+
 ---
 
 ## [2026.8.19] — 2026-08-19

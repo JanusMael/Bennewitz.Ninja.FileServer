@@ -125,6 +125,50 @@ public sealed class ExtensionFilterTests
         Assert.False(mount.IsAllowed("readme.md"));
     }
 
+    [Theory]
+    [InlineData("md")]
+    [InlineData(".md")]
+    [InlineData("MD")]
+    [InlineData(" .md ")]
+    public void Normalise_AcceptsEverySpellingOfTheSameExtension(string configured)
+    {
+        var normalised = FileServerMountOptions.NormaliseExtensions([configured]);
+
+        Assert.Contains(".md", normalised);
+        Assert.Single(normalised);
+    }
+
+    [Fact]
+    public void Normalise_MixedInput_ProducesDottedCaseInsensitiveSet()
+    {
+        var normalised = FileServerMountOptions.NormaliseExtensions(["pdf", ".CSV", " txt ", ""]);
+
+        Assert.Equal(
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase) { ".pdf", ".csv", ".txt", "" },
+            normalised);
+
+        // The empty entry means "files with no extension" and must never acquire a dot, or the
+        // one way of listing extensionless files stops working.
+        Assert.Contains("", normalised);
+        Assert.DoesNotContain(".", normalised);
+    }
+
+    [Fact]
+    public void Normalise_IsCaseInsensitiveAfterNormalising()
+    {
+        var normalised = FileServerMountOptions.NormaliseExtensions(["PDF"]);
+
+        Assert.Contains(".pdf", normalised);
+        Assert.Contains(".PDF", normalised);
+    }
+
+    [Fact]
+    public void Normalise_NullOrEmptyInput_YieldsEmptySetMeaningEverythingIsServed()
+    {
+        Assert.Empty(FileServerMountOptions.NormaliseExtensions(null));
+        Assert.Empty(FileServerMountOptions.NormaliseExtensions([]));
+    }
+
     private static AllowedExtensionsFileProvider Filtered(TempDirectory root, IReadOnlySet<string> allowed) =>
         new(new PhysicalFileProvider(root.ResolvedPath), allowed);
 

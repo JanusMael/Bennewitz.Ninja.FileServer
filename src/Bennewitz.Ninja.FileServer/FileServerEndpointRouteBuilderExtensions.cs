@@ -75,6 +75,11 @@ public static class FileServerEndpointRouteBuilderExtensions
             throw new DirectoryNotFoundException(
                 $"The directory to serve does not exist: '{options.RootPath}'.");
 
+        // Normalised here rather than at the match sites, which run per request and per entry.
+        // Replacing the set leaves the caller's instance untouched; both IsAllowed sites then
+        // compare dotted forms against dotted forms with no further change.
+        options.AllowedExtensions = FileServerMountOptions.NormaliseExtensions(options.AllowedExtensions);
+
         var mount = new FileServerMount(NormalisePrefix(prefix), options);
         registry.Register(mount);
 

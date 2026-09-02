@@ -23,11 +23,53 @@ public sealed class FileServerMountOptions
 
     /// <summary>
     /// File extensions that may be listed and downloaded. When empty (the default) every file
-    /// is served. Compared case-insensitively; the leading dot is expected (<c>.pdf</c>).
-    /// An empty string matches files with no extension.
+    /// is served. Compared case-insensitively; the leading dot is optional and normalised when
+    /// the mount is registered, so <c>pdf</c> and <c>.pdf</c> are equivalent. An empty string
+    /// matches files with no extension.
     /// </summary>
+    /// <remarks>
+    /// Normalisation replaces this set rather than editing it, so the instance you assign is
+    /// never modified. Matching compares against <see cref="Path.GetExtension(string)"/>, which
+    /// always returns the dotted form — a dotless entry would otherwise match nothing and the
+    /// mount would serve nothing at all, silently.
+    /// </remarks>
     public IReadOnlySet<string> AllowedExtensions { get; set; } =
         new HashSet<string>(0, StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Returns <paramref name="extensions"/> as a case-insensitive set in the dotted form that
+    /// <see cref="Path.GetExtension(string)"/> produces: entries are trimmed, a missing leading
+    /// dot is added, and an empty entry is preserved as the marker for files with no extension.
+    /// </summary>
+    /// <remarks>
+    /// The single normaliser for the whole product. Both the library's registration path and the
+    /// CLI's configuration binding call it, so the two surfaces cannot drift into disagreeing
+    /// about whether a dot is required — which is exactly what they had done.
+    /// <para>
+    /// Public rather than internal so the CLI can reach it without internals access: that host
+    /// deliberately consumes only what a package consumer can, which is what keeps the package
+    /// honest. It is also useful directly when validating configuration before assigning it,
+    /// though a mount normalises whatever it is given.
+    /// </para>
+    /// </remarks>
+    public static IReadOnlySet<string> NormaliseExtensions(IEnumerable<string>? extensions)
+    {
+        if (extensions is null)
+            return new HashSet<string>(0, StringComparer.OrdinalIgnoreCase);
+
+        var normalised = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var extension in extensions)
+        {
+            var trimmed = extension.Trim();
+
+            // The empty entry means "no extension", which is what Path.GetExtension returns for
+            // such a file. Prepending a dot here would quietly delete the only way to list them.
+            normalised.Add(trimmed.Length == 0 || trimmed.StartsWith('.') ? trimmed : '.' + trimmed);
+        }
+
+        return normalised;
+    }
 
     /// <summary>
     /// Whether directory contents may be browsed. When <c>false</c>, the mount root and any

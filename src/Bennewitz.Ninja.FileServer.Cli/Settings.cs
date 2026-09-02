@@ -178,7 +178,7 @@ public static class Settings
             Environment.Exit(0);
         }
 
-        _allowedExtensions = NormalizeExtensions(_settingsModel.AllowedExtensions);
+        _allowedExtensions = FileServerMountOptions.NormaliseExtensions(_settingsModel.AllowedExtensions);
     }
 
     /// <summary>
@@ -462,24 +462,6 @@ public static class Settings
         Console.WriteLine("  FILE_SERVER_CERT_PATH         CertificatePath");
         Console.WriteLine("  FILE_SERVER_CERT_PASSWORD     CertificatePassword");
         Console.WriteLine("  FILE_SERVER_ALLOWED_EXTENSIONS  Semicolon-delimited, e.g. .pdf;.txt");
-    }
-
-    private static IReadOnlySet<string> NormalizeExtensions(string[]? raw)
-    {
-        if (raw is null || raw.Length == 0)
-            return new HashSet<string>(0, StringComparer.OrdinalIgnoreCase);
-        var set = new HashSet<string>(raw.Length, StringComparer.OrdinalIgnoreCase);
-        foreach (var ext in raw)
-        {
-            var t = ext.Trim();
-            // Empty string represents files with no extension (Path.GetExtension returns "").
-            // Don't prepend a dot — just add the empty string to the set as-is.
-            if (t.Length == 0 || t.StartsWith('.'))
-                set.Add(t);
-            else
-                set.Add('.' + t);
-        }
-        return set;
     }
 
     private static int ValidatePort(int port, string name)
