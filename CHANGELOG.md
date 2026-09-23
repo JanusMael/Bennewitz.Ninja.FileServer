@@ -9,6 +9,10 @@ Versions follow a `YYYY.M.D` calendar scheme.
 
 ## [Unreleased]
 
+---
+
+## [2026.9.23] — 2026-09-23
+
 ### Added
 - `UnlistedPatterns`: globs for files and directories left out of listings but still served at their exact URL — a way to share a link to a file without advertising it in the tree. Patterns are anchored at the mount root (`*.key` matches only top-level files, `**/*.key` any depth) and compared case-insensitively. Unlisted is not access control. CLI: `UnlistedPatterns` in `settings.json`, `FILE_SERVER_UNLISTED_PATTERNS`, `--unlisted-patterns`.
 - `ExposedSensitivePatterns`: globs for dot-prefixed, Hidden or System paths to serve anyway, such as `.well-known/**` for `security.txt` or ACME challenges. Matched case-sensitively against the whole path. CLI: `ExposedSensitivePatterns` in `settings.json`, `FILE_SERVER_EXPOSED_SENSITIVE_PATTERNS`, `--exposed-sensitive-patterns`.
@@ -90,7 +94,8 @@ Versions follow a `YYYY.M.D` calendar scheme.
 - `settings.json.example` shipped alongside each binary as a configuration starter.
 - CI workflow (build on push/PR to `main`) and release workflow (publish all RIDs + GitHub Release on `v*` tag).
 
-[Unreleased]: https://github.com/JanusMael/Bennewitz.Ninja.FileServer/compare/v2026.9.2...HEAD
+[Unreleased]: https://github.com/JanusMael/Bennewitz.Ninja.FileServer/compare/v2026.9.23...HEAD
+[2026.9.23]: https://github.com/JanusMael/Bennewitz.Ninja.FileServer/compare/v2026.9.2...v2026.9.23
 [2026.9.2]: https://github.com/JanusMael/Bennewitz.Ninja.FileServer/compare/v2026.8.19...v2026.9.2
 [2026.8.19]: https://github.com/JanusMael/Bennewitz.Ninja.FileServer/compare/v2026.8.18...v2026.8.19
 [2026.8.18]: https://github.com/JanusMael/Bennewitz.Ninja.FileServer/compare/v2026.5.15...v2026.8.18

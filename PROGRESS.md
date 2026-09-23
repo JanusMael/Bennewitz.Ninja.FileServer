@@ -1,9 +1,10 @@
 # Progress
 
-## Current work — [plan 00001](plans/00001-unlisted-files.md): unlisted files and sensitive-path refusal
+## Completed — [plan 00001](plans/00001-unlisted-files.md): unlisted files and sensitive-path refusal
 
-Branch `feat/unlisted-patterns`. All eight steps are implemented and verified; not yet committed
-beyond the plan itself.
+All eight steps are implemented and verified. Merged in
+[#10](https://github.com/JanusMael/Bennewitz.Ninja.FileServer/pull/10) and released as 2026.9.23.
+No work is in progress.
 
 | Step | Status | Verified by |
 | --- | --- | --- |
