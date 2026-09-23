@@ -1,5 +1,6 @@
 using Bennewitz.Ninja.FileServer.Tests.Infrastructure;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.FileProviders.Physical;
 
 namespace Bennewitz.Ninja.FileServer.Tests;
 
@@ -169,8 +170,11 @@ public sealed class ExtensionFilterTests
         Assert.Empty(FileServerMountOptions.NormaliseExtensions([]));
     }
 
-    private static AllowedExtensionsFileProvider Filtered(TempDirectory root, IReadOnlySet<string> allowed) =>
-        new(new PhysicalFileProvider(root.ResolvedPath), allowed);
+    private static ListingFileProvider Filtered(TempDirectory root, IReadOnlySet<string> allowed) =>
+        new(
+            new PhysicalFileProvider(root.ResolvedPath, ExclusionFilters.None),
+            allowed,
+            new SensitivePathPolicy(root.ResolvedPath));
 
     private static FileServerMount Mount(TempDirectory root, IReadOnlySet<string> allowed) =>
         new("/files", new FileServerMountOptions

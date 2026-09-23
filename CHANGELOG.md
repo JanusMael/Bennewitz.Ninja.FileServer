@@ -9,6 +9,13 @@ Versions follow a `YYYY.M.D` calendar scheme.
 
 ## [Unreleased]
 
+### Added
+- `UnlistedPatterns`: globs for files and directories left out of listings but still served at their exact URL — a way to share a link to a file without advertising it in the tree. Patterns are anchored at the mount root (`*.key` matches only top-level files, `**/*.key` any depth) and compared case-insensitively. Unlisted is not access control. CLI: `UnlistedPatterns` in `settings.json`, `FILE_SERVER_UNLISTED_PATTERNS`, `--unlisted-patterns`.
+- `ExposedSensitivePatterns`: globs for dot-prefixed, Hidden or System paths to serve anyway, such as `.well-known/**` for `security.txt` or ACME challenges. Matched case-sensitively against the whole path. CLI: `ExposedSensitivePatterns` in `settings.json`, `FILE_SERVER_EXPOSED_SENSITIVE_PATTERNS`, `--exposed-sensitive-patterns`.
+
+### Changed
+- **Breaking:** a path with any segment that is dot-prefixed, or on Windows has the Hidden or System attribute, now returns 404 on direct request. Listings have always left these out, but downloads did not, so `.env`, `.git/config` and the like were served to anyone who typed the URL. The check runs on the canonical path, so encoded `..` segments, backslashes, alternate data streams and 8.3 short names do not reach around it. To keep serving such a path, add it to `ExposedSensitivePatterns`, and to `UnlistedPatterns` as well to keep it out of listings as before.
+
 ---
 
 ## [2026.9.2] — 2026-09-02
