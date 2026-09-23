@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.FileProviders.Physical;
 
 namespace Bennewitz.Ninja.FileServer;
 
@@ -20,10 +21,20 @@ internal sealed class FileServerMount
         // links on every request would be wasted work.
         ResolvedRoot = FileServerPath.ResolveFinal(options.RootPath);
 
-        FileProvider = new AllowedExtensionsFileProvider(
-            new PhysicalFileProvider(ResolvedRoot),
-            options.AllowedExtensions);
+        Policy = new SensitivePathPolicy(ResolvedRoot, options.ExposedSensitivePatterns);
+
+        // ExclusionFilters.None, deliberately: the provider's own Sensitive filter would govern
+        // listings only, and cannot know about exposure. The policy governs downloads as well,
+        // and one rule applied in both places is what keeps the two from disagreeing.
+        FileProvider = new ListingFileProvider(
+            new PhysicalFileProvider(ResolvedRoot, ExclusionFilters.None),
+            options.AllowedExtensions,
+            Policy,
+            options.UnlistedPatterns);
     }
+
+    /// <summary>Which paths are sensitive, for both the download path and listings.</summary>
+    internal SensitivePathPolicy Policy { get; }
 
     internal string Prefix { get; }
 
@@ -36,7 +47,7 @@ internal sealed class FileServerMount
 
     /// <summary>
     /// Whether a file may be served, by extension. Both the listing and the download path call
-    /// this — the download path cannot rely on <see cref="AllowedExtensionsFileProvider"/>,
+    /// this — the download path cannot rely on <see cref="ListingFileProvider"/>,
     /// because serving a file by physical path bypasses the provider entirely.
     /// </summary>
     internal bool IsAllowed(string fileName) =>

@@ -79,6 +79,10 @@ public static class FileServerEndpointRouteBuilderExtensions
         // Replacing the set leaves the caller's instance untouched; both IsAllowed sites then
         // compare dotted forms against dotted forms with no further change.
         options.AllowedExtensions = FileServerMountOptions.NormaliseExtensions(options.AllowedExtensions);
+        options.UnlistedPatterns = GlobPatterns.Normalise(
+            options.UnlistedPatterns, nameof(FileServerMountOptions.UnlistedPatterns));
+        options.ExposedSensitivePatterns = GlobPatterns.Normalise(
+            options.ExposedSensitivePatterns, nameof(FileServerMountOptions.ExposedSensitivePatterns));
 
         var mount = new FileServerMount(NormalisePrefix(prefix), options);
         registry.Register(mount);
@@ -123,6 +127,11 @@ public static class FileServerEndpointRouteBuilderExtensions
         if (!mount.TryResolve(path, out var fullPath))
             return Results.NotFound();
 
+        // Before the directory branch: a sensitive directory is refused as a listing too, not
+        // only the files beneath it.
+        if (mount.Policy.IsRefused(path))
+            return Results.NotFound();
+
         if (Directory.Exists(fullPath))
         {
             return mount.Options.EnableDirectoryBrowsing
@@ -135,7 +144,7 @@ public static class FileServerEndpointRouteBuilderExtensions
 
         var fileName = Path.GetFileName(fullPath);
 
-        // Re-checked here and not left to AllowedExtensionsFileProvider: serving a file by
+        // Re-checked here and not left to ListingFileProvider: serving a file by
         // physical path bypasses the provider entirely, so without this a filtered extension
         // would be hidden from listings yet still downloadable by direct URL.
         if (!mount.IsAllowed(fileName))

@@ -72,6 +72,56 @@ public sealed class FileServerMountOptions
     }
 
     /// <summary>
+    /// Glob patterns for entries left out of directory listings but still served at their exact
+    /// URL. When empty (the default) listings show everything else the mount allows. Matched
+    /// case-insensitively against the entry's path relative to the mount root, with <c>/</c>
+    /// separators — so patterns are anchored there: <c>*.key</c> matches <c>a.key</c> but not
+    /// <c>sub/a.key</c>, which takes <c>**/*.key</c>.
+    /// </summary>
+    /// <remarks>
+    /// <b>Unlisted is not access control.</b> Anyone holding the URL gets the file, and URLs leak
+    /// through browser history, referrers and logs. Protect anything that matters with
+    /// authorization on the mount instead.
+    /// <para>
+    /// A pattern can match a directory as well as a file. The directory is left out of its
+    /// parent's listing, but its own URL still lists what it holds, unless those entries match a
+    /// pattern too: <c>private</c> hides the directory entry, <c>private/**</c> hides what is
+    /// inside it, and hiding both takes both. Unlisting never changes what is served: a file
+    /// <see cref="AllowedExtensions"/> refuses stays refused, and a sensitive path stays refused
+    /// unless <see cref="ExposedSensitivePatterns"/> exposes it.
+    /// </para>
+    /// <para>
+    /// Normalised when the mount is registered: entries are trimmed, empties dropped, <c>\</c>
+    /// becomes <c>/</c>, and a leading <c>/</c> is removed. A pattern that is rooted or contains
+    /// a <c>..</c> segment fails registration. The list you assign is never modified.
+    /// </para>
+    /// </remarks>
+    public IReadOnlyList<string> UnlistedPatterns { get; set; } = [];
+
+    /// <summary>
+    /// Glob patterns for sensitive paths that are served anyway. A path is sensitive when any
+    /// segment below the mount root is dot-prefixed, or names an entry with the Hidden or
+    /// System attribute; such paths are never listed and return 404 unless a pattern here
+    /// matches. When empty (the default) every sensitive path is refused.
+    /// </summary>
+    /// <remarks>
+    /// Matched against the <em>whole</em> path relative to the mount root, anchored there as for
+    /// <see cref="UnlistedPatterns"/>, and <b>case-sensitively</b>: this option widens what is
+    /// served, and on a case-sensitive filesystem <c>.WELL-KNOWN</c> is a different directory
+    /// from <c>.well-known</c>.
+    /// <para>
+    /// <c>.well-known/**</c> serves <c>.well-known/security.txt</c> and
+    /// <c>.well-known/acme-challenge/token</c> — and anything else beneath it, dotfiles
+    /// included, since the pattern covers them. The <c>.well-known</c> directory itself stays
+    /// refused, so it cannot be listed, unless <c>.well-known</c> is also a pattern. An exposed
+    /// path behaves like any other: listed unless it matches <see cref="UnlistedPatterns"/>, and
+    /// served only if <see cref="AllowedExtensions"/> allows it.
+    /// </para>
+    /// <para>Normalised and validated exactly as <see cref="UnlistedPatterns"/> is.</para>
+    /// </remarks>
+    public IReadOnlyList<string> ExposedSensitivePatterns { get; set; } = [];
+
+    /// <summary>
     /// Whether directory contents may be browsed. When <c>false</c>, the mount root and any
     /// directory path return 404 while individual file downloads still succeed.
     /// Default: <c>true</c>.
