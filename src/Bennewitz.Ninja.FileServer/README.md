@@ -67,11 +67,57 @@ not at request time: a duplicate prefix, or a root that overlaps another mount's
 | --- | --- | --- |
 | `RootPath` | *(required)* | Absolute path of the directory to serve. Must exist at startup. |
 | `AllowedExtensions` | *(empty — all files)* | Extensions that may be listed **and** downloaded, e.g. `.pdf`. The leading dot is optional — `pdf` and `.pdf` are equivalent. An empty string matches files with no extension. Applied on both paths. |
+| `UnlistedPatterns` | *(empty)* | Globs for files and directories left out of listings but still served at their exact URL. See [Unlisted files](#unlisted-files). |
+| `ExposedSensitivePatterns` | *(empty)* | Globs for dot-prefixed, Hidden or System paths to serve anyway, e.g. `.well-known/**`. See [Hidden and dot-prefixed files](#hidden-and-dot-prefixed-files). |
 | `EnableDirectoryBrowsing` | `true` | When `false`, directories 404 while direct file downloads still work. |
 | `RenderMarkdown` | `true` | When `false`, `.md` files are served as raw bytes. |
 | `LayoutPath` | `null` | A host layout to render inside, e.g. `/Views/Shared/_Layout.cshtml`. Defaults to the component's own self-contained layout. |
 | `IncludeDefaultStyles` | `true` | Emit the component's stylesheet and colour-scheme toggle. Set `false` to style the markup yourself. |
 | `CacheControl` | `no-store` | `Cache-Control` sent with served files. |
+
+## Unlisted files
+
+```csharp
+options.UnlistedPatterns = ["**/*.key", "private"];
+```
+
+A matching entry is left out of its directory's listing and still downloads at its exact URL.
+Patterns are globs anchored at the mount root and compared case-insensitively:
+
+| Pattern | Matches | Does not match |
+| --- | --- | --- |
+| `*.key` | `a.key` | `sub/a.key` |
+| `**/*.key` | `a.key`, `sub/a.key` | |
+| `drafts/*.md` | `drafts/a.md` | `a.md` |
+| `private` | the `private` directory entry | what is inside it |
+| `private/**` | everything inside `private` | the `private` directory entry |
+
+An unlisted directory still lists its own contents when you open its URL, unless they match a
+pattern too. Unlisting never changes what is served: `AllowedExtensions` still refuses what it
+refuses, and hidden or dot-prefixed files stay refused.
+
+**Unlisted is not access control.** Anyone holding the URL gets the file, and URLs leak through
+browser history, referrers and logs. Protect anything that matters with `RequireAuthorization()`.
+
+## Hidden and dot-prefixed files
+
+A path is never listed and never served when any segment below the mount root starts with a dot,
+or, on Windows, names a file or directory with the Hidden or System attribute. So `.env`,
+`.git/config` and everything beneath `.private/` return 404. The check runs on the canonical
+path, so encoded dot segments, backslashes, alternate data streams and 8.3 short names reach no
+further than the plain name would.
+
+To serve one anyway, name it in `ExposedSensitivePatterns`:
+
+```csharp
+options.ExposedSensitivePatterns = [".well-known/**"];
+```
+
+These patterns match the whole path relative to the root, **case-sensitively**, since they widen
+what is served. `.well-known/**` serves everything beneath `.well-known`, dotfiles included, but
+not the directory itself; add `.well-known` as well to make it listable. An exposed path is then
+treated like any other: listed unless it is unlisted, and served only if `AllowedExtensions`
+allows it.
 
 ## Markdown
 

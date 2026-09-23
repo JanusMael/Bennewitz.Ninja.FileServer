@@ -67,8 +67,10 @@ Three things worth knowing before adding to it:
 When changing containment or the extension filter, break the rule on purpose and confirm the
 suite goes red before fixing it. Removing link resolution from `FileServerPath` should fail four
 tests; removing the download-path extension check should fail
-`Mount_AllowedExtensions_HidesAndRefusesFilteredFiles`. A test that survives its own mutation is
-not protecting anything.
+`Mount_AllowedExtensions_HidesAndRefusesFilteredFiles`. The same goes for sensitive paths: removing
+the `Policy.IsRefused` check from `Handle` should turn `SensitivePathTests` red, and matching
+`ExposedSensitivePatterns` case-insensitively should fail `Exposure_IsCaseSensitive`. A test that
+survives its own mutation is not protecting anything.
 
 ## Testing the package locally
 

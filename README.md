@@ -159,6 +159,37 @@ Settings are resolved in this order (later sources override earlier ones):
 | `CertificatePath` | `FILE_SERVER_CERT_PATH` | `--cert` | *(none — HTTP only)* | Absolute path to a PFX certificate file. When set, HTTPS is enabled on `HttpsPort`. |
 | `CertificatePassword` | `FILE_SERVER_CERT_PASSWORD` | `--cert-password` | *(empty)* | Password for the PFX file. May be omitted for password-less PFX files. |
 | `AllowedExtensions` | `FILE_SERVER_ALLOWED_EXTENSIONS` | `--allowed-extensions` | *(empty — all files)* | JSON string array of permitted file extensions (e.g. `[".pdf", ".txt"]`). Env var and CLI: semicolon-delimited (e.g. `.pdf;.txt;.zip`). When non-empty, only matching files appear in listings and can be downloaded. Directories are always visible. Leading dot is optional. |
+| `UnlistedPatterns` | `FILE_SERVER_UNLISTED_PATTERNS` | `--unlisted-patterns` | *(empty)* | JSON string array of globs (env var and CLI: semicolon-delimited) for files and directories left out of listings but still served at their exact URL. See [Unlisted files](#unlisted-files). |
+| `ExposedSensitivePatterns` | `FILE_SERVER_EXPOSED_SENSITIVE_PATTERNS` | `--exposed-sensitive-patterns` | *(empty)* | Globs, same formats, for dot-prefixed or Hidden paths to serve anyway, e.g. `.well-known/**`. See [Hidden and dot-prefixed files](#hidden-and-dot-prefixed-files). |
+
+### Unlisted files
+
+```sh
+FileServer --root /srv/files --unlisted-patterns "**/*.key;private"
+```
+
+A matching entry is left out of its directory's listing and still downloads at its exact URL.
+Patterns are globs anchored at the served root and compared case-insensitively: `*.key` matches
+`a.key` but not `sub/a.key`, which takes `**/*.key`. `private` hides the directory entry,
+`private/**` hides what is inside it. An unlisted directory still lists its own contents at its
+URL, and unlisting never makes a file downloadable that would otherwise be refused.
+
+**Unlisted is not access control.** Anyone holding the URL gets the file, and URLs leak through
+browser history, referrers and logs.
+
+### Hidden and dot-prefixed files
+
+Any path with a segment that starts with a dot — or, on Windows, a file or directory with the
+Hidden or System attribute — is never listed and never served: `.env`, `.git/config` and anything
+beneath `.private/` return 404. To serve one anyway, name it:
+
+```sh
+FileServer --root /srv/files --exposed-sensitive-patterns ".well-known/**"
+```
+
+These patterns match the whole path relative to the served root, case-sensitively.
+`.well-known/**` serves everything beneath `.well-known` but not the directory itself; add
+`.well-known` too to make it listable.
 
 ### CLI argument syntax
 
