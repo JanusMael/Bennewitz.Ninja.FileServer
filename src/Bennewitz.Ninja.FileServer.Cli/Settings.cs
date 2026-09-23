@@ -157,6 +157,20 @@ public static class Settings
             Console.WriteLine($"FILE_SERVER_ALLOWED_EXTENSIONS overrides AllowedExtensions: `{envExtensions}`");
         }
 
+        var envUnlisted = Environment.GetEnvironmentVariable("FILE_SERVER_UNLISTED_PATTERNS");
+        if (!string.IsNullOrWhiteSpace(envUnlisted))
+        {
+            _settingsModel.UnlistedPatterns = SplitList(envUnlisted);
+            Console.WriteLine($"FILE_SERVER_UNLISTED_PATTERNS overrides UnlistedPatterns: `{envUnlisted}`");
+        }
+
+        var envExposed = Environment.GetEnvironmentVariable("FILE_SERVER_EXPOSED_SENSITIVE_PATTERNS");
+        if (!string.IsNullOrWhiteSpace(envExposed))
+        {
+            _settingsModel.ExposedSensitivePatterns = SplitList(envExposed);
+            Console.WriteLine($"FILE_SERVER_EXPOSED_SENSITIVE_PATTERNS overrides ExposedSensitivePatterns: `{envExposed}`");
+        }
+
         // CLI arguments override everything.
         ApplyArgs(args, _settingsModel);
 
@@ -292,6 +306,34 @@ public static class Settings
     /// </remarks>
     public static IReadOnlySet<string> AllowedExtensions => _allowedExtensions;
 
+    /// <summary>
+    /// Glob patterns for files and directories left out of listings but still served at their
+    /// exact URL. Empty by default. Patterns are anchored at the served root: <c>*.key</c> matches
+    /// only top-level files, <c>**/*.key</c> matches at any depth. Unlisted is not access control.
+    /// </summary>
+    /// <remarks>
+    /// Configure via <c>UnlistedPatterns</c> in <c>settings.json</c> (JSON string array), the
+    /// environment variable <c>FILE_SERVER_UNLISTED_PATTERNS</c>, or the
+    /// <c>--unlisted-patterns</c> CLI argument (both semicolon-delimited). Validated when the
+    /// mount is registered, which fails startup for a pattern that escapes the root.
+    /// </remarks>
+    public static IReadOnlyList<string> UnlistedPatterns => _settingsModel.UnlistedPatterns ?? [];
+
+    /// <summary>
+    /// Glob patterns for dot-prefixed, Hidden or System paths that are served anyway, e.g.
+    /// <c>.well-known/**</c>. Empty by default, which refuses every such path. Matched
+    /// case-sensitively against the whole path relative to the served root.
+    /// </summary>
+    /// <remarks>
+    /// Configure via <c>ExposedSensitivePatterns</c> in <c>settings.json</c> (JSON string array),
+    /// the environment variable <c>FILE_SERVER_EXPOSED_SENSITIVE_PATTERNS</c>, or the
+    /// <c>--exposed-sensitive-patterns</c> CLI argument (both semicolon-delimited).
+    /// </remarks>
+    public static IReadOnlyList<string> ExposedSensitivePatterns => _settingsModel.ExposedSensitivePatterns ?? [];
+
+    private static string[] SplitList(string raw) =>
+        raw.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
     // ASP.NET Core host-configuration switches consumed by WebApplication.CreateBuilder(args).
     // Warnings are suppressed for these so users don't see false-positive "unrecognised" noise.
     private static readonly HashSet<string> s_frameworkArgs = new(StringComparer.OrdinalIgnoreCase)
@@ -425,6 +467,26 @@ public static class Settings
                     }
                     break;
                 }
+                case "--unlisted-patterns":
+                {
+                    var raw = TakeNext();
+                    if (raw is not null)
+                    {
+                        model.UnlistedPatterns = SplitList(raw);
+                        Console.WriteLine($"--unlisted-patterns overrides UnlistedPatterns: `{raw}`");
+                    }
+                    break;
+                }
+                case "--exposed-sensitive-patterns":
+                {
+                    var raw = TakeNext();
+                    if (raw is not null)
+                    {
+                        model.ExposedSensitivePatterns = SplitList(raw);
+                        Console.WriteLine($"--exposed-sensitive-patterns overrides ExposedSensitivePatterns: `{raw}`");
+                    }
+                    break;
+                }
                 default:
                     // Suppress warnings for known ASP.NET Core host-configuration switches that
                     // WebApplication.CreateBuilder(args) consumes after this method returns.
@@ -450,6 +512,9 @@ public static class Settings
         Console.WriteLine("  --cert <path>                Path to a PFX certificate file (enables HTTPS)");
         Console.WriteLine("  --cert-password <password>   Password for the PFX file (omit for passwordless)");
         Console.WriteLine("  --allowed-extensions <exts>  Semicolon-delimited allowed extensions, e.g. .pdf;.txt");
+        Console.WriteLine("  --unlisted-patterns <globs>  Semicolon-delimited globs served but not listed, e.g. **/*.key;private");
+        Console.WriteLine("  --exposed-sensitive-patterns <globs>");
+        Console.WriteLine("                               Dot-prefixed/Hidden paths to serve anyway, e.g. .well-known/**");
         Console.WriteLine("  --help, -h, -?               Show this help and exit");
         Console.WriteLine();
         Console.WriteLine("Precedence (highest wins): CLI args > environment variables > settings.json");
@@ -462,6 +527,8 @@ public static class Settings
         Console.WriteLine("  FILE_SERVER_CERT_PATH         CertificatePath");
         Console.WriteLine("  FILE_SERVER_CERT_PASSWORD     CertificatePassword");
         Console.WriteLine("  FILE_SERVER_ALLOWED_EXTENSIONS  Semicolon-delimited, e.g. .pdf;.txt");
+        Console.WriteLine("  FILE_SERVER_UNLISTED_PATTERNS   Semicolon-delimited globs");
+        Console.WriteLine("  FILE_SERVER_EXPOSED_SENSITIVE_PATTERNS  Semicolon-delimited globs");
     }
 
     private static int ValidatePort(int port, string name)
@@ -487,6 +554,10 @@ public static class Settings
         public string? CertificatePassword { get; set; }
 
         public string[]? AllowedExtensions { get; set; }
+
+        public string[]? UnlistedPatterns { get; set; }
+
+        public string[]? ExposedSensitivePatterns { get; set; }
 
         public static SettingsModel Load(string filePath)
         {

@@ -132,6 +132,8 @@ public static class Program
         {
             options.RootPath = servedFilesRoot;
             options.AllowedExtensions = Settings.AllowedExtensions;
+            options.UnlistedPatterns = Settings.UnlistedPatterns;
+            options.ExposedSensitivePatterns = Settings.ExposedSensitivePatterns;
         });
 
         // Serving that one directory is all this executable does, so the root is a redirect to it
