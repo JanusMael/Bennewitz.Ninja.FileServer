@@ -363,6 +363,59 @@ public sealed class MountRequestTests
         }
     }
 
+    [Fact]
+    public async Task Mount_DotPrefixedFile_IsOmittedFromListing()
+    {
+        using var root = new TempDirectory();
+        root.WriteFile("visible.txt");
+        root.WriteFile(".secret.txt");
+
+        await using var host = await StartAsync(root);
+
+        var response = await host.Client.GetAsync("/docs");
+        var listing = await response.Content.ReadAsStringAsync();
+
+        // The sibling proves the listing rendered; without it an empty or failed page would pass.
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("visible.txt", listing, StringComparison.Ordinal);
+        Assert.DoesNotContain(".secret.txt", listing, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Mount_DotPrefixedDirectory_IsOmittedFromListing()
+    {
+        using var root = new TempDirectory();
+        root.CreateSubdirectory("public-dir");
+        root.WriteFile(".private/inside.txt");
+
+        await using var host = await StartAsync(root);
+
+        var response = await host.Client.GetAsync("/docs");
+        var listing = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("public-dir", listing, StringComparison.Ordinal);
+        Assert.DoesNotContain(".private", listing, StringComparison.Ordinal);
+    }
+
+    [WindowsFact]
+    public async Task Mount_HiddenAttributeFile_IsOmittedFromListing()
+    {
+        using var root = new TempDirectory();
+        root.WriteFile("visible.txt");
+        var concealed = root.WriteFile("concealed.txt");
+        File.SetAttributes(concealed, File.GetAttributes(concealed) | FileAttributes.Hidden);
+
+        await using var host = await StartAsync(root);
+
+        var response = await host.Client.GetAsync("/docs");
+        var listing = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("visible.txt", listing, StringComparison.Ordinal);
+        Assert.DoesNotContain("concealed.txt", listing, StringComparison.Ordinal);
+    }
+
     private static Task<FileServerTestHost> StartAsync(TempDirectory root) =>
         FileServerTestHost.StartAsync(endpoints =>
             endpoints.MapFileServer("/docs", o => o.RootPath = root.Path));
