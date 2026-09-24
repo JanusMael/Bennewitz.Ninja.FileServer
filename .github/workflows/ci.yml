@@ -84,8 +84,8 @@ jobs:
   # description, topics, feature toggles and rulesets. See docs/repository-conventions.md in
   # Bennewitz.Ninja.Templates.
   #
-  # ⚠ Not yet a required check: it stays red until this repository's documentation lands, and a
-  # required red job would block every pull request in the meantime.
+  # ⚠ The job name is a required check in .github/repository.json. Renaming it means changing that
+  # list and running `repo-conventions apply` in the same change, or every pull request blocks.
   conventions:
     runs-on: ubuntu-latest
     permissions:

@@ -45,6 +45,15 @@ jobs:
         run: echo "version=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
         shell: bash
 
+      # ⛔ Nothing publishes from a repository missing what the family conventions prescribe: its
+      # documents, a replaced marker, a description. Runs in the preflight too, so a dispatch with
+      # the version blank reports it before a tag does. A setting that has merely drifted does not
+      # stop a release; CI's `conventions` job reports that.
+      - name: Refuse to release a repository the conventions reject
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: dotnet run --file scripts/repo-conventions.cs -- check --release
+
       - name: Publish all RIDs
         if: env.RELEASING == 'true'
         run: pwsh publish/publish.ps1 -All

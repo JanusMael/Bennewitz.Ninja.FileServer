@@ -11,7 +11,8 @@
   ],
   "requiredChecks": [
     "build",
-    "docker"
+    "docker",
+    "conventions"
   ],
   "content": [],
   "undocumented": {}
