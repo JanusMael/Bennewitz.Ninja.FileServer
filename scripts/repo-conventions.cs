@@ -118,7 +118,7 @@ else
 {
     try
     {
-        config = Config.Parse(configText, findings);
+        config = Config.Parse(configText, Baseline.Publishes(tree), findings);
     }
     catch (JsonException error)
     {
@@ -161,9 +161,9 @@ int Check()
     }
 
     string[] liveTopics = [.. (live["topics"]?.AsArray() ?? []).Select(t => t!.GetValue<string>()).Order(StringComparer.Ordinal)];
-    foreach (string missing in Baseline.Topics.Except(liveTopics))
+    foreach (string missing in Baseline.TopicsFor(Baseline.Publishes(tree)).Except(liveTopics))
     {
-        findings.Add(Finding.Fail("topics", $"GitHub's topics lack \"{missing}\", which every family repository carries."));
+        findings.Add(Finding.Fail("topics", $"GitHub's topics lack \"{missing}\", {Baseline.WhyTopic(missing)}."));
     }
 
     if (config is not null)
@@ -320,7 +320,25 @@ static class Baseline
         ("has_discussions", false),
     ];
 
-    public static readonly string[] Topics = ["csharp", "dotnet", "nuget"];
+    /// <summary>
+    /// The topics every family repository carries, and <c>nuget</c> as well when it publishes to
+    /// nuget.org. An app, a site or an API that packs nothing is not a NuGet package, and a topic
+    /// saying otherwise sends people looking for one.
+    /// </summary>
+    public static string[] TopicsFor(bool publishes) =>
+        publishes ? ["csharp", "dotnet", "nuget"] : ["csharp", "dotnet"];
+
+    public static string WhyTopic(string topic) =>
+        topic == "nuget"
+            ? "which every repository that publishes to nuget.org carries: packages.push names an id"
+            : "which every family repository carries";
+
+    /// <summary>Whether <c>packages.push</c> names at least one id, blank lines and comments aside.</summary>
+    public static bool Publishes(Tree tree) =>
+        (tree.Read("packages.push") ?? "")
+            .Split('\n')
+            .Select(line => line.Trim())
+            .Any(line => line.Length > 0 && !line.StartsWith('#'));
 
     /// <summary>GitHub's built-in repository-admin role.</summary>
     public const int AdminRoleId = 5;
@@ -398,20 +416,20 @@ sealed record Config(
     IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> PropsExempt,
     bool TrimmingRequired)
 {
-    public static Config Parse(string text, List<Finding> findings)
+    public static Config Parse(string text, bool publishes, List<Finding> findings)
     {
         JsonObject json = JsonNode.Parse(text)?.AsObject() ?? throw new JsonException("the document is empty.");
 
         string description = json["description"]?.GetValue<string>() ?? "";
         if (description.Trim().Length == 0)
         {
-            findings.Add(Finding.Fail("repository.json", "\"description\" is empty. One sentence saying what the repository is and which packages it ships."));
+            findings.Add(Finding.Fail("repository.json", "\"description\" is empty. One sentence saying what the repository is and what it ships."));
         }
 
         string[] topics = Strings(json["topics"]);
-        foreach (string missing in Baseline.Topics.Except(topics))
+        foreach (string missing in Baseline.TopicsFor(publishes).Except(topics))
         {
-            findings.Add(Finding.Fail("repository.json", $"\"topics\" lacks \"{missing}\", which every family repository carries."));
+            findings.Add(Finding.Fail("repository.json", $"\"topics\" lacks \"{missing}\", {Baseline.WhyTopic(missing)}."));
         }
 
         Dictionary<string, string> undocumented = new(StringComparer.Ordinal);

@@ -13,6 +13,8 @@ properties. None changes what a user of the package or the server sees.
   fix is unbuilt.
 - `scripts/repo-conventions.cs` evaluates every project against the family's build properties
   (`f10c674`, `514fec0`).
+- The `nuget` topic is required only where `packages.push` names an id: `scripts/repo-conventions.cs` is
+  the template's current copy again (Templates `fb6961a`).
 
 **The library is deliberately not marked trimmable.** Measured for step 7 of that plan: with its three
 `MapGet(string, Delegate)` calls moved to `RequestDelegate` handlers, the trim analyzer and an ILLink
