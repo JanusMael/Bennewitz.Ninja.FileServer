@@ -30,7 +30,7 @@ user is in [`README.md`](README.md); how to build, test and release is in
 | `samples/` | `SampleWebApp`, which installs the component from a package; not in the solution |
 | `publish/` | PowerShell scripts: per-RID publish, local pack, and the boot smoke test |
 | `docker/` | The standard and bundled-content Dockerfiles and the bundle build scripts |
-| `scripts/` | `repo-conventions.cs`, the family's conventions check |
+| `scripts/` | `repo-conventions.cs`, the family's conventions check, and `assert-packages.cs`, the packed-versus-declared check |
 | `plans/` | Numbered plans; approved ones are left as approved |
 | `.github/` | The CI and release workflows, and `repository.json` |
 
@@ -46,6 +46,8 @@ user is in [`README.md`](README.md); how to build, test and release is in
 | A mount whose prefix or root collides with another fails at registration | Two mounts with different policies answer for the same files | `FileServerMountRegistry.Register`; `MountRegistrationTests` |
 | The CLI uses only the public API; `InternalsVisibleTo` names the test assembly alone | The executable can do what a package consumer cannot | `Bennewitz.Ninja.FileServer.csproj` |
 | The library's `AssemblyName` is `Bennewitz.Ninja.FileServer.Hosting`; the CLI's `PackageId` is `Bennewitz.Ninja.FileServer.Cli` | Restore fails with "Ambiguous project name", or two assemblies collide in one output folder | both `.csproj` files; CI's `Pack` step |
+| What a release publishes is named in `packages.push`, never globbed; a packable project is in `packages.push` or `packages.local` | A packable project added later ships permanently on the next tag | `PackagingTests`; `scripts/assert-packages.cs` in CI's `pack` job and before the push |
+| Every package resolves from nuget.org alone: the root `NuGet.config` clears the sources and maps `*` to it | A machine-level feed supplies a package unnoticed | `NuGet.config`; `samples/nuget.config` adds the local feed for the sample only |
 | The version is the tag, `vYYYY.M.D`, passed in as `PublicVersion` | Every package is published as `1.0.0`, and a version on nuget.org can never be replaced | `Version` in `Bennewitz.Ninja.FileServer.csproj`; `release.yml`, step `Extract version from tag` |
 | `THIRD-PARTY-NOTICES.md` travels in the package, every archive and both images | The vendored `github-markdown.min.css` is redistributed without its MIT notice | the library `.csproj`; `Publish-Rid.ps1`; both Dockerfiles; CI's `docker` job |
 | A local `settings.json` is never published or committed | A release archive leaks a machine's paths | `CopyToPublishDirectory` `Never` in the CLI `.csproj`; `.gitignore` |

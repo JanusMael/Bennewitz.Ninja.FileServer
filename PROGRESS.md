@@ -9,8 +9,8 @@ properties. None changes what a user of the package or the server sees.
 - Central package management (`f10c674`): every version is in `Directory.Packages.props`, and the
   sample keeps its `$(FileServerVersion)` through a conditional `PackageVersion`; the tests gain
   AutoVersioning. Every package resolves as before. Both Dockerfiles copy `Directory.Packages.props`
-  before the restore (`762cdd9`); CI builds only `Dockerfile`, so `Dockerfile.bundle`'s copy of the
-  fix is unbuilt.
+  before the restore (`762cdd9`); CI builds only `Dockerfile`. `Dockerfile.bundle` has since been
+  built locally (see the `NuGet.config` entry below).
 - `scripts/repo-conventions.cs` evaluates every project against the family's build properties
   (`f10c674`, `514fec0`).
 - The `nuget` topic is required only where `packages.push` names an id: `scripts/repo-conventions.cs` is
@@ -35,8 +35,15 @@ found, which `repo-conventions` cannot see:
   before is not an SDK property: a publish under each name showed no ReadyToRun header on the app's
   assemblies before and one after. The `win-x64` binary grows from 104.5 MB to 124.3 MB, and the
   published archive's binary starts and serves. `Smoke-Test.ps1` publishes without ReadyToRun, so
-  CI still smoke-tests a non-ReadyToRun build. User-visible, so in the CHANGELOG.
-- Still to do: `NuGet.config`, and xunit.v3 on Microsoft.Testing.Platform with `global.json`.
+  CI still smoke-tests a non-ReadyToRun build. User-visible, so in the CHANGELOG (`32dd506`).
+- `NuGet.config` is the template's: sources cleared, nuget.org only, `*` mapped to it. The sample's
+  `nuget.config` maps its own package to both the local feed and nuget.org, and restates `*`,
+  because its mapping otherwise leaves the sample's other packages unmapped (`NU1100`). Both
+  Dockerfiles copy `NuGet.config` before the restore. Restored into empty package folders: the
+  solution, the sample at its default `2026.9.2`, and the sample at a local-only
+  `2026.9.25-local.t1733`. Both images build locally, `Dockerfile.bundle` with a throwaway
+  `FilesRoot/`, which settles the note above that its copy of the restore fix was unbuilt.
+- Still to do: xunit.v3 on Microsoft.Testing.Platform with `global.json`.
 
 **The library is deliberately not marked trimmable.** Measured for step 7 of that plan: with its three
 `MapGet(string, Delegate)` calls moved to `RequestDelegate` handlers, the trim analyzer and an ILLink
