@@ -51,9 +51,13 @@ found, which `repo-conventions` cannot see:
   workflow's `setup-dotnet` reads it. v3 required a source-location constructor on the three skip
   attributes and `TestContext.Current.CancellationToken` on 69 calls, threaded as each class's
   `Cancel` as bbapi and bbweb do. 165 pass on Windows, none skipped; forcing `WindowsFact` to skip
-  reported 6 skipped and none failed, so the skip attributes still work under v3.
-  **WSL can no longer run the suite:** its SDK is Ubuntu's 10.0.112, below the pin, so a Linux run
-  there needs a 10.0.4xx SDK installed first. CI's Linux runners install from `global.json`.
+  reported 6 skipped and none failed, so the skip attributes still work under v3 (`e2decd9`).
+  WSL's Ubuntu SDK (10.0.112) is below the pin, so WSL now has 10.0.401 from `dotnet-install.sh`
+  in `~/.dotnet`, first on `PATH` through `~/.profile`. On Linux (ext4) the suite runs 158 passed,
+  7 skipped (the Windows-only tests), 0 failed.
+- The sample's `FileServerVersion` default is `2026.9.23`, the current release, per
+  CONTRIBUTING's release step 4. Built with an empty packages folder, it restored `2026.9.23` and
+  `/files` served a listing.
 
 **The library is deliberately not marked trimmable.** Measured for step 7 of that plan: with its three
 `MapGet(string, Delegate)` calls moved to `RequestDelegate` handlers, the trim analyzer and an ILLink
