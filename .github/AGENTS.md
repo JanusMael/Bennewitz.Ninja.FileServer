@@ -18,5 +18,5 @@ This repository's workflows and settings.
 | `NuGet/login` stays immediately before `Push the package to NuGet.org` | The token it returns is short-lived and expires across a slow step | the comment on `Log in to NuGet.org (OIDC)` |
 | Every publishing step is gated on `RELEASING`, true only for a tag push | A manual run would publish instead of only proving the credentials | `release.yml`, `env` |
 | `permissions` keeps `id-token: write` and `contents: write` | Without the first the login returns 403; without the second the GitHub Release cannot be created | `release.yml`, `publish` job |
-| An unset `NUGET_USER` secret skips the push, never the release | A fork, or a repository without a policy, still gets a complete GitHub Release | `release.yml`, `Push the package to NuGet.org` |
+| An unset `NUGET_USER` variable skips the push, never the release | A fork, or a repository without a policy, still gets a complete GitHub Release | `release.yml`, `Push the package to NuGet.org` |
 | `docker` asserts on the running container, not on the build | The image has broken in ways the .NET build cannot see: a base image dropping a tool, an entry point naming a library | `ci.yml`, `Run it and check it serves` |

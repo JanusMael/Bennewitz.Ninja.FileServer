@@ -4,7 +4,7 @@ on:
   push:
     tags: ['v*']
   # Credential preflight. Running this by hand logs in to NuGet.org and stops, which proves the
-  # trusted-publishing policy, the id-token permission, and the NUGET_USER secret all line up —
+  # trusted-publishing policy, the id-token permission, and the NUGET_USER variable all line up —
   # without cutting a release. It has to live in this workflow rather than a test one of its own:
   # the OIDC token is bound to the workflow file, so a different filename would never match the
   # policy. Every publishing step below is gated on a tag push, so a manual run cannot publish.
@@ -24,11 +24,12 @@ jobs:
 
     env:
       # Trusted publishing carries no secret to leak — this is only the nuget.org profile name
-      # the OIDC token is exchanged against. Read at job level so the steps below can test it:
-      # the secrets context is not available in a step's own `if`. Unset means no publish, so a
-      # fork or a repository that has not configured trusted publishing still gets a complete
-      # GitHub Release.
-      NUGET_USER: ${{ secrets.NUGET_USER }}
+      # the OIDC token is exchanged against. A repository variable rather than a secret: it is
+      # not a credential, and a masked value would turn a failed login into "owned by user
+      # '***'", hiding the one value that explains it. Unset means no publish, so a fork or a
+      # repository that has not configured trusted publishing still gets a complete GitHub
+      # Release.
+      NUGET_USER: ${{ vars.NUGET_USER }}
       # A tag push is a real release; anything else is the preflight.
       RELEASING: ${{ github.event_name == 'push' }}
 
@@ -73,7 +74,7 @@ jobs:
         if: env.NUGET_USER != ''
         uses: NuGet/login@v1
         with:
-          user: ${{ secrets.NUGET_USER }}
+          user: ${{ vars.NUGET_USER }}
 
       - name: Report the preflight result
         if: env.RELEASING != 'true'

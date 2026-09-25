@@ -152,8 +152,10 @@ no long-lived API key in the repository to rotate or leak. Two things have to li
 - A policy at [nuget.org/account/trustedpublishing](https://www.nuget.org/account/trustedpublishing)
   naming repository owner `JanusMael`, repository `Bennewitz.Ninja.FileServer`, and workflow file
   `release.yml`. The filename must match exactly — it is how NuGet.org identifies the caller.
-- A repository secret `NUGET_USER` holding the **nuget.org profile name**, not an email address.
-  It is not a credential; it only says which account the token is exchanged against.
+- A repository **variable** `NUGET_USER` holding the **nuget.org profile name** of whoever created
+  the policy, not an email address. It is not a credential; it only says which account the token
+  is exchanged against. Keep it a variable, not a secret: a masked value turns a failed login into
+  `owned by user '***'`, hiding the one value that would explain it.
 
 Without `NUGET_USER` the push step is skipped and everything else still runs, so tagging from a
 fork — or before the policy exists — produces a complete GitHub Release rather than a failure.
