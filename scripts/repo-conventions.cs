@@ -965,7 +965,12 @@ static class Props
                 ? null
                 : $"RepositoryUrl is \"{url}\", not this repository, github.com/{repoName}.");
         }
-        yield return Expect(p, "PackageReadmeFile", "README.md");
+        // A package shows a README on nuget.org whatever the file is called: DiffView's libraries
+        // pack a hosting guide as theirs. That the named file is actually packed, NuGet enforces
+        // itself: `dotnet pack` fails with NU5039 when it is not.
+        yield return ("PackageReadmeFile", Value(p, "PackageReadmeFile").Trim().Length > 0
+            ? null
+            : "sets no PackageReadmeFile, so nuget.org shows the package without a README.");
         yield return Expect(p, "DebugType", "embedded");
     }
 
