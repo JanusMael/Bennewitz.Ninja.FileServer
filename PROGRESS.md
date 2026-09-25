@@ -28,10 +28,15 @@ found, which `repo-conventions` cannot see:
   the project files. A tag with `NUGET_USER` unset is now refused rather than released without
   its package. `PackagingTests` departs from the template on purpose: a project counts as packable
   unless it sets `IsPackable` to `false`, since the template's explicit-`true` test would miss a
-  new library that says nothing. Not yet exercised by a tag: the pack, assert and push loop were
-  rehearsed locally against a solution pack.
-- Still to do: `-p:PublishReadyToRun=true` in `publish/Publish-Rid.ps1`, `NuGet.config`, and
-  xunit.v3 on Microsoft.Testing.Platform with `global.json`.
+  new library that says nothing (`89ca5c9`, CI green including the new `pack` job). Not yet
+  exercised by a tag: the pack, assert and push loop were rehearsed locally against a solution
+  pack.
+- `publish/Publish-Rid.ps1` passes `-p:PublishReadyToRun=true`. The `ReadyToRun=true` it passed
+  before is not an SDK property: a publish under each name showed no ReadyToRun header on the app's
+  assemblies before and one after. The `win-x64` binary grows from 104.5 MB to 124.3 MB, and the
+  published archive's binary starts and serves. `Smoke-Test.ps1` publishes without ReadyToRun, so
+  CI still smoke-tests a non-ReadyToRun build. User-visible, so in the CHANGELOG.
+- Still to do: `NuGet.config`, and xunit.v3 on Microsoft.Testing.Platform with `global.json`.
 
 **The library is deliberately not marked trimmable.** Measured for step 7 of that plan: with its three
 `MapGet(string, Delegate)` calls moved to `RequestDelegate` handlers, the trim analyzer and an ILLink

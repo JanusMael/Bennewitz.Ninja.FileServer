@@ -19,7 +19,7 @@
     Each invocation:
       1. Optionally wipes bin/obj across the src tree (see -Clean).
       2. Runs `dotnet publish -c Release -r <rid> --self-contained true`
-         with ReadyToRun=true and output tee'd to a per-RID log under dist/logs/.
+         with PublishReadyToRun=true and output tee'd to a per-RID log under dist/logs/.
       3. Packages the published folder:
            Windows RIDs  → dist/Bennewitz.Ninja.FileServer-<rid>.zip
            Linux/macOS   → dist/Bennewitz.Ninja.FileServer-<rid>.tar.gz
@@ -123,7 +123,9 @@ if (Test-Path $ridFolder) {
 # PublishSingleFile=true bundles the executable and all managed DLLs into one file.
 # IncludeNativeLibrariesForSelfExtract=true also bundles native runtime libs (libcoreclr, etc.)
 # so the only files in the archive are the binary and settings.json.example.
-# ReadyToRun pre-compiles hot paths to improve Kestrel startup time.
+# PublishReadyToRun pre-compiles hot paths to improve Kestrel startup time. The SDK property is
+# PublishReadyToRun; a bare ReadyToRun is not one, is silently ignored, and shipped every release
+# up to 2026.9.23 without ReadyToRun code.
 # IncrementalBuild=false forces a fresh compilation per RID so the output
 # cannot accidentally reuse another RID's artifacts.
 # Tee-Object preserves $LASTEXITCODE so we can read the real dotnet exit code.
@@ -134,7 +136,7 @@ dotnet publish "$projectPath" `
     --self-contained true `
     -p:PublishSingleFile=true `
     -p:IncludeNativeLibrariesForSelfExtract=true `
-    -p:ReadyToRun=true `
+    -p:PublishReadyToRun=true `
     -p:IncrementalBuild=false `
     -p:BuildInParallel=false 2>&1 | Tee-Object -FilePath $logPath
 

@@ -9,6 +9,9 @@ Versions follow a `YYYY.M.D` calendar scheme.
 
 ## [Unreleased]
 
+### Fixed
+- The standalone binaries are now compiled ReadyToRun, as the publish script always intended. It passed `ReadyToRun=true`, which is not an SDK property and was silently ignored, so every release up to 2026.9.23 shipped without ReadyToRun code; the property is `PublishReadyToRun`. The binaries are larger for it: the `win-x64` executable grows from 104.5 MB to 124.3 MB.
+
 ---
 
 ## [2026.9.23] — 2026-09-23
