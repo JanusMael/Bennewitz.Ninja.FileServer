@@ -37,8 +37,9 @@ found, which `repo-conventions` cannot see:
   published archive's binary starts and serves. `Smoke-Test.ps1` publishes without ReadyToRun, so
   CI still smoke-tests a non-ReadyToRun build. User-visible, so in the CHANGELOG (`32dd506`).
 - `NuGet.config` is the template's: sources cleared, nuget.org only, `*` mapped to it. The sample's
-  `nuget.config` maps its own package to both the local feed and nuget.org, and restates `*`,
-  because its mapping otherwise leaves the sample's other packages unmapped (`NU1100`). Both
+  `nuget.config` maps its own package to both the local feed and nuget.org, and restates `*`:
+  its patterns under the `nuget.org` key replace the root's for that key (a mapping under another
+  key merges), so without `*` every other package fails `NU1100`. Both
   Dockerfiles copy `NuGet.config` before the restore. Restored into empty package folders: the
   solution, the sample at its default `2026.9.2`, and the sample at a local-only
   `2026.9.25-local.t1733`. Both images build locally, `Dockerfile.bundle` with a throwaway
