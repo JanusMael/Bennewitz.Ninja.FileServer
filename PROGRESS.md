@@ -57,7 +57,13 @@ found, which `repo-conventions` cannot see:
   7 skipped (the Windows-only tests), 0 failed.
 - The sample's `FileServerVersion` default is `2026.9.23`, the current release, per
   CONTRIBUTING's release step 4. Built with an empty packages folder, it restored `2026.9.23` and
-  `/files` served a listing.
+  `/files` served a listing (`81aad4e`).
+- CI's sample step builds against the package the run just packed. It had passed no
+  `FileServerVersion`, so it restored the published release from nuget.org, as its comment said it
+  did not. `build` now sets a run-unique `PublicVersion`, `YYYY.M.D-ci.r<run>.a<attempt>`, before
+  the build, and passes it to the sample. nuget.org never has that version, so the restore can only
+  succeed from the local feed. Rehearsed on Linux with an empty packages folder: the sample restored
+  `2026.9.25-ci.r9999.a1`.
 
 **The library is deliberately not marked trimmable.** Measured for step 7 of that plan: with its three
 `MapGet(string, Delegate)` calls moved to `RequestDelegate` handlers, the trim analyzer and an ILLink

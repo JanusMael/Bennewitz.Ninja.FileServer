@@ -17,6 +17,13 @@ jobs:
         with:
           global-json-file: global.json
 
+      # A version no other build produces, so the sample below can only restore the package this
+      # run packs: nuget.org never has it. Set before the build, which stamps it, and read by every
+      # later step. The run and attempt numbers are letter-prefixed because a digits-only
+      # prerelease identifier with a leading zero fails restore (publish/AGENTS.md).
+      - name: Choose the CI package version
+        run: echo "PublicVersion=$(date -u +%Y.%-m.%-d)-ci.r${{ github.run_number }}.a${{ github.run_attempt }}" >> "$GITHUB_ENV"
+
       - name: Restore
         run: dotnet restore
 
@@ -34,9 +41,10 @@ jobs:
 
       # The sample takes a PackageReference, so building it restores the package that was just
       # produced and compiles against what it actually ships — not against a project reference
-      # that would resolve types the package might omit.
+      # that would resolve types the package might omit. Without the version it would restore the
+      # published release from nuget.org instead, and prove nothing about this commit.
       - name: Build the sample against the package
-        run: dotnet build samples/SampleWebApp -c Release
+        run: dotnet build samples/SampleWebApp -c Release -p:FileServerVersion="$PublicVersion"
 
       # Boot failures do not show up in a build: a missing view, an unregistered service, or a
       # port that cannot bind all compile perfectly well.

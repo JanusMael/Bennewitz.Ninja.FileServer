@@ -4,7 +4,7 @@ This repository's workflows and settings.
 
 | File | What it is |
 |---|---|
-| `workflows/ci.yml` | On every push and pull request to `main`. `build`: restore, build, test, pack the component into `publish/local-feed`, build `samples/SampleWebApp`, then `publish/Smoke-Test.ps1`. `docker`: builds `docker/Dockerfile`, runs it, and checks the listing, a rendered `.md`, uid `1654` and `/app/THIRD-PARTY-NOTICES.md`. `conventions`: `repo-conventions check` |
+| `workflows/ci.yml` | On every push and pull request to `main`. `build`: choose a run-unique `PublicVersion` (`YYYY.M.D-ci.r<run>.a<attempt>`), restore, build, test, pack the component into `publish/local-feed`, build `samples/SampleWebApp` against that exact version, then `publish/Smoke-Test.ps1`. `pack`: packs the solution and runs `scripts/assert-packages.cs`. `docker`: builds `docker/Dockerfile`, runs it, and checks the listing, a rendered `.md`, uid `1654` and `/app/THIRD-PARTY-NOTICES.md`. `conventions`: `repo-conventions check` |
 | `workflows/release.yml` | On a `v*` tag: `publish/publish.ps1 -All`, packs the solution, checks the packed ids against `packages.push` and `packages.local`, pushes each id in `packages.push` to nuget.org, and creates the GitHub Release with each named `.nupkg` and the six per-RID archives. Dispatched by hand, it only logs in to nuget.org and reports the account and the ids a tag would push |
 | `repository.json` | Description, topics and `requiredChecks`, the job names the `main` ruleset requires |
 | `copilot-instructions.md` | A pointer to the root `AGENTS.md` |
