@@ -16,6 +16,10 @@ properties. None changes what a user of the package or the server sees.
 - The `nuget` topic is required only where `packages.push` names an id: `scripts/repo-conventions.cs` is
   the template's current copy again (Templates `fb6961a`).
 
+Separately, `release.yml` reads `NUGET_USER` from a repository variable instead of a secret
+(`c99c92a`). The preflight logged in as `JanusMael` from the variable alone, and the secret is
+deleted.
+
 **The library is deliberately not marked trimmable.** Measured for step 7 of that plan: with its three
 `MapGet(string, Delegate)` calls moved to `RequestDelegate` handlers, the trim analyzer and an ILLink
 pass report nothing. But a consumer publishing with `TrimMode=partial` then trims the library and
