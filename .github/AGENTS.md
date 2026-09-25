@@ -5,7 +5,7 @@ This repository's workflows and settings.
 | File | What it is |
 |---|---|
 | `workflows/ci.yml` | On every push and pull request to `main`. `build`: restore, build, test, pack the component into `publish/local-feed`, build `samples/SampleWebApp`, then `publish/Smoke-Test.ps1`. `docker`: builds `docker/Dockerfile`, runs it, and checks the listing, a rendered `.md`, uid `1654` and `/app/THIRD-PARTY-NOTICES.md`. `conventions`: `repo-conventions check` |
-| `workflows/release.yml` | On a `v*` tag: `publish/publish.ps1 -All`, packs the component, pushes it to nuget.org, and creates the GitHub Release with the archives and the `.nupkg`. Dispatched by hand, it only logs in to nuget.org and reports the account |
+| `workflows/release.yml` | On a `v*` tag: `publish/publish.ps1 -All`, packs the solution, checks the packed ids against `packages.push` and `packages.local`, pushes each id in `packages.push` to nuget.org, and creates the GitHub Release with each named `.nupkg` and the six per-RID archives. Dispatched by hand, it only logs in to nuget.org and reports the account and the ids a tag would push |
 | `repository.json` | Description, topics and `requiredChecks`, the job names the `main` ruleset requires |
 | `copilot-instructions.md` | A pointer to the root `AGENTS.md` |
 
@@ -18,5 +18,6 @@ This repository's workflows and settings.
 | `NuGet/login` stays immediately before `Push the package to NuGet.org` | The token it returns is short-lived and expires across a slow step | the comment on `Log in to NuGet.org (OIDC)` |
 | Every publishing step is gated on `RELEASING`, true only for a tag push | A manual run would publish instead of only proving the credentials | `release.yml`, `env` |
 | `permissions` keeps `id-token: write` and `contents: write` | Without the first the login returns 403; without the second the GitHub Release cannot be created | `release.yml`, `publish` job |
-| An unset `NUGET_USER` variable skips the push, never the release | A fork, or a repository without a policy, still gets a complete GitHub Release | `release.yml`, `Push the package to NuGet.org` |
+| **The release names every package and archive; it never globs.** Package ids come from `packages.push`, which is their only home | A published version is permanent, so a glob that sweeps up an unintended package cannot be undone | `PackagingTests`; `scripts/assert-packages.cs` in CI's `pack` job and before the push |
+| A tag with `NUGET_USER` unset is refused, not released without its package | A green run and a release page with no package reads as evidence the package shipped | `release.yml`, `Refuse to release without NUGET_USER` |
 | `docker` asserts on the running container, not on the build | The image has broken in ways the .NET build cannot see: a base image dropping a tool, an entry point naming a library | `ci.yml`, `Run it and check it serves` |

@@ -1,0 +1,12 @@
+# Package ids published to nuget.org, one per line. Blank lines and # comments are ignored.
+#
+# This file is machine-read twice: the release workflow names each id explicitly in its push and
+# its GitHub release, and PackagingTests asserts that every packable project appears here or in
+# packages.local. Adding a packable project without classifying it FAILS THE BUILD, which is the
+# whole point — the alternative is discovering it after a permanent publish.
+#
+# ⛔ Every id here must be covered by the repository's ONE trusted-publishing policy. nuget.org
+# mints one API key per token exchange scoped to one matching policy, so a policy per id does not
+# work: the first id publishes permanently and the rest are rejected 403 in the same command.
+
+Bennewitz.Ninja.FileServer

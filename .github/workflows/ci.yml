@@ -43,6 +43,27 @@ jobs:
       - name: Smoke-test the published binary
         run: pwsh publish/Smoke-Test.ps1
 
+  # ⭐ The release's pack and its packed-vs-declared check, on every push. At release time a
+  # packaging mistake surfaces with the tag already pushed and the version already spent; here
+  # it is free. PackagingTests in `build` checks the project files; this checks the output.
+  pack:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.x'
+
+      - name: Pack
+        run: dotnet pack Bennewitz.Ninja.FileServer.sln -c Release --nologo --output ./packages/Release
+
+      - name: Assert packed matches declared
+        run: dotnet run --file scripts/assert-packages.cs -- ./packages/Release
+
   docker:
     runs-on: ubuntu-latest
 

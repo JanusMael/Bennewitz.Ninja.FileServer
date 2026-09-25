@@ -1,0 +1,13 @@
+# Package ids that PACK but must never reach nuget.org, one per line, each with the reason above
+# it as a # comment. Blank lines and # comments are ignored.
+#
+# Packed is not pushable. A solution can legitimately produce a package meant only for a local
+# feed — a diagnostics helper, a fixture, a tool used by this repository's own build. Listing it
+# here says "deliberately private" rather than "forgotten", and the trusted-publishing policy's
+# glob pattern must NOT match anything in this file.
+#
+# Bennewitz.Ninja.DiffView is the worked example: dotnet pack over its solution produced a
+# local-feed-only id, and a *.nupkg glob in its release workflow would have published it
+# permanently on the first release.
+#
+# Empty is the normal state. Add an id only when you mean it.

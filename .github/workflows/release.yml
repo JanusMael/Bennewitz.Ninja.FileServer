@@ -1,5 +1,10 @@
 name: Release
 
+# ⛔ A PUBLISHED NUGET VERSION CAN NEVER BE REPLACED. Everything else here is recoverable; the
+# push is not. So the packed-vs-declared check runs before it, the package is named from
+# packages.push rather than globbed, and --skip-duplicate makes a re-run of a completed release a
+# no-op rather than a failure.
+
 on:
   push:
     tags: ['v*']
@@ -26,9 +31,7 @@ jobs:
       # Trusted publishing carries no secret to leak — this is only the nuget.org profile name
       # the OIDC token is exchanged against. A repository variable rather than a secret: it is
       # not a credential, and a masked value would turn a failed login into "owned by user
-      # '***'", hiding the one value that explains it. Unset means no publish, so a fork or a
-      # repository that has not configured trusted publishing still gets a complete GitHub
-      # Release.
+      # '***'", hiding the one value that explains it. A tag with it unset is refused below.
       NUGET_USER: ${{ vars.NUGET_USER }}
       # A tag push is a real release; anything else is the preflight.
       RELEASING: ${{ github.event_name == 'push' }}
@@ -40,11 +43,25 @@ jobs:
         with:
           dotnet-version: '10.x'
 
+      # The version comes from the TAG, so the tag and the package agree by construction.
       - name: Extract version from tag
         id: version
         if: env.RELEASING == 'true'
-        run: echo "version=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+        run: |
+          echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
         shell: bash
+
+      # ⛔ Fail LOUDLY rather than publish nothing quietly. Without this, a tag with the variable
+      # unset skips the push (which is gated on NUGET_USER) but still creates the GitHub Release
+      # below — a green run, a release page, and no package. That false green is worse than a
+      # failure, because the next person reads the release as evidence the package shipped.
+      - name: Refuse to release without NUGET_USER
+        if: env.RELEASING == 'true' && env.NUGET_USER == ''
+        run: |
+          echo "::error::NUGET_USER is not set. Refusing to release: the push would be skipped"
+          echo "::error::and a GitHub Release would be created for a package that never shipped."
+          exit 1
 
       # ⛔ Nothing publishes from a repository missing what the family conventions prescribe: its
       # documents, a replaced marker, a description. Runs in the preflight too, so a dispatch with
@@ -61,11 +78,21 @@ jobs:
         env:
           PublicVersion: ${{ steps.version.outputs.version }}
 
-      - name: Pack the component
+      # The whole solution, not one project: a packable project added later then shows up in the
+      # packed output, where the next step refuses it until it is classified.
+      - name: Pack
         if: env.RELEASING == 'true'
-        run: dotnet pack src/Bennewitz.Ninja.FileServer -c Release -o nupkg
+        run: dotnet pack Bennewitz.Ninja.FileServer.sln -c Release -o nupkg
         env:
           PublicVersion: ${{ steps.version.outputs.version }}
+
+      # ⛔ The last gate before anything becomes permanent. PackagingTests already checked the
+      # project files; this checks what pack ACTUALLY produced, reading each id from the <id>
+      # element inside the .nuspec rather than parsing filenames. A package that appears here and
+      # in neither list stops the run.
+      - name: Assert packed matches declared
+        if: env.RELEASING == 'true'
+        run: dotnet run --file scripts/assert-packages.cs -- ./nupkg
 
       # Kept immediately before the push: the token this returns is short-lived, and a slow step
       # in between is how it expires before it is used.
@@ -76,32 +103,70 @@ jobs:
         with:
           user: ${{ vars.NUGET_USER }}
 
+      # ⚠ A successful login proves a policy matched — NEVER that it covers every id. The exchange
+      # succeeds before any package id is considered, so the summary lists what a tag would push
+      # from packages.push, for comparing against the policy's glob patterns on nuget.org.
       - name: Report the preflight result
         if: env.RELEASING != 'true'
         run: |
           if [ -z "$NUGET_USER" ]; then
-            echo "::error::NUGET_USER is not set, so no publish would happen on a tag."
+            echo "::error::NUGET_USER is not set, so a tag would be refused."
             exit 1
           fi
           echo "Logged in to NuGet.org as '$NUGET_USER'. Tagging will publish."
-          echo "### Trusted publishing verified" >> "$GITHUB_STEP_SUMMARY"
-          echo "Logged in as \`$NUGET_USER\`. A \`v*\` tag will publish the package." >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "### Trusted publishing verified"
+            echo "Logged in as \`$NUGET_USER\`. A \`v*\` tag will publish:"
+            echo ""
+            grep -v '^[[:space:]]*#' packages.push | grep -v '^[[:space:]]*$' | sed 's/^/- `/; s/$/`/'
+            echo ""
+            echo "Confirm ONE policy on nuget.org whose Glob Patterns cover every id above, and"
+            echo "NOT a policy per id: one exchange mints one key scoped to one policy, so a second"
+            echo "policy is never consulted and its package is rejected 403 — after the first is"
+            echo "already permanent."
+            if grep -qE '^[[:space:]]*[^#[:space:]]' packages.local 2>/dev/null; then
+              echo ""
+              echo "⛔ That pattern must NOT match anything in packages.local:"
+              grep -v '^[[:space:]]*#' packages.local | grep -v '^[[:space:]]*$' | sed 's/^/- `/; s/$/`/'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
+      # ⚠ NAMED, NEVER GLOBBED — and driven by packages.push rather than a list repeated here, so
+      # the declaration has exactly one home. A glob publishes whatever happens to be in the
+      # folder, and a published version is permanent.
       - name: Push the package to NuGet.org
         if: env.RELEASING == 'true' && env.NUGET_USER != ''
-        run: >
-          dotnet nuget push "nupkg/*.nupkg"
-          --source https://api.nuget.org/v3/index.json
-          --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
-          --skip-duplicate
+        run: |
+          set -euo pipefail
+          targets=()
+          while IFS= read -r id; do
+            targets+=("./nupkg/${id}.${VERSION}.nupkg")
+          done < <(grep -v '^[[:space:]]*#' packages.push | grep -v '^[[:space:]]*$')
+          printf 'Pushing %s\n' "${targets[@]}"
+          dotnet nuget push "${targets[@]}" \
+            --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}" \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
 
+      # Same list for the packages, and one archive per runtime identifier, each named: a missing
+      # one fails here rather than shipping a release without that platform, and nothing unnamed
+      # is attached. The archive names carry no version, so releases/latest/download links keep
+      # working across releases.
       - name: Create GitHub Release
         if: env.RELEASING == 'true'
-        uses: softprops/action-gh-release@v2
-        with:
-          generate_release_notes: true
-          fail_on_unmatched_files: true
-          files: |
-            publish/dist/*.zip
-            publish/dist/*.tar.gz
-            nupkg/*.nupkg
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          assets=()
+          while IFS= read -r id; do
+            assets+=("./nupkg/${id}.${VERSION}.nupkg")
+          done < <(grep -v '^[[:space:]]*#' packages.push | grep -v '^[[:space:]]*$')
+          for rid in win-x64 win-arm64; do
+            assets+=("publish/dist/Bennewitz.Ninja.FileServer-${rid}.zip")
+          done
+          for rid in linux-x64 linux-arm64 osx-x64 osx-arm64; do
+            assets+=("publish/dist/Bennewitz.Ninja.FileServer-${rid}.tar.gz")
+          done
+          ls -l "${assets[@]}"
+          gh release create "${GITHUB_REF_NAME}" --title "${GITHUB_REF_NAME}" --generate-notes "${assets[@]}"

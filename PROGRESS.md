@@ -16,9 +16,22 @@ properties. None changes what a user of the package or the server sees.
 - The `nuget` topic is required only where `packages.push` names an id: `scripts/repo-conventions.cs` is
   the template's current copy again (Templates `fb6961a`).
 
-Separately, `release.yml` reads `NUGET_USER` from a repository variable instead of a secret
-(`c99c92a`). The preflight logged in as `JanusMael` from the variable alone, and the secret is
-deleted.
+Separately, the departures from `templates/bbpkg` that the Templates session's audit of `7205fc5`
+found, which `repo-conventions` cannot see:
+
+- `release.yml` reads `NUGET_USER` from a repository variable instead of a secret (`c99c92a`). The
+  preflight logged in as `JanusMael` from the variable alone, and the secret is deleted.
+- The release names what it publishes. `packages.push` lists `Bennewitz.Ninja.FileServer`, and
+  `packages.local` is empty. The push and the GitHub Release take their ids from `packages.push`,
+  and the six archives are named per RID. `scripts/assert-packages.cs` (the template's copy)
+  checks the packed output in CI's new `pack` job and before the push, and `PackagingTests` checks
+  the project files. A tag with `NUGET_USER` unset is now refused rather than released without
+  its package. `PackagingTests` departs from the template on purpose: a project counts as packable
+  unless it sets `IsPackable` to `false`, since the template's explicit-`true` test would miss a
+  new library that says nothing. Not yet exercised by a tag: the pack, assert and push loop were
+  rehearsed locally against a solution pack.
+- Still to do: `-p:PublishReadyToRun=true` in `publish/Publish-Rid.ps1`, `NuGet.config`, and
+  xunit.v3 on Microsoft.Testing.Platform with `global.json`.
 
 **The library is deliberately not marked trimmable.** Measured for step 7 of that plan: with its three
 `MapGet(string, Delegate)` calls moved to `RequestDelegate` handlers, the trim analyzer and an ILLink

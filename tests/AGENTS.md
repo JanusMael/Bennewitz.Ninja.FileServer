@@ -13,6 +13,7 @@ why.
 | `MountRegistrationTests` | Prefix normalisation and the conflicts `FileServerMountRegistry` refuses |
 | `MountRequestTests`, `MountAuthorizationTests` | Requests through a `TestServer`: listings, Markdown, headers, assets, and `RequireAuthorization` covering downloads |
 | `MarkdownHighlightingTests` | Fenced-code tokenising and escaping |
+| `Packaging/PackagingTests` | Every packable project under `src/` is in `packages.push` or `packages.local`, and `release.yml` globs nothing and takes its ids from `packages.push` |
 | `Infrastructure/` | `FileServerTestHost`, `TempDirectory`, `TestAuthenticationHandler`, and `SymlinkFact`, `WindowsFact`, `ShortNameFact` |
 
 ## Rules

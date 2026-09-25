@@ -69,7 +69,10 @@ suite goes red before fixing it. Removing link resolution from `FileServerPath` 
 tests; removing the download-path extension check should fail
 `Mount_AllowedExtensions_HidesAndRefusesFilteredFiles`. The same goes for sensitive paths: removing
 the `Policy.IsRefused` check from `Handle` should turn `SensitivePathTests` red, and matching
-`ExposedSensitivePatterns` case-insensitively should fail `Exposure_IsCaseSensitive`. A test that
+`ExposedSensitivePatterns` case-insensitively should fail `Exposure_IsCaseSensitive`. Adding a
+project under `src/` that says nothing about `IsPackable` should fail
+`Every_packable_project_is_classified`, and a `*.nupkg` glob in `release.yml` should fail
+`The_release_workflow_globs_nothing_and_publishes_what_is_declared`. A test that
 survives its own mutation is not protecting anything.
 
 ## Testing the package locally
@@ -157,8 +160,15 @@ no long-lived API key in the repository to rotate or leak. Two things have to li
   is exchanged against. Keep it a variable, not a secret: a masked value turns a failed login into
   `owned by user '***'`, hiding the one value that would explain it.
 
-Without `NUGET_USER` the push step is skipped and everything else still runs, so tagging from a
-fork — or before the policy exists — produces a complete GitHub Release rather than a failure.
+Without `NUGET_USER` a tag is refused before anything is built: a GitHub Release without its
+package would read as evidence the package shipped.
+
+What a tag publishes is declared, never globbed. `packages.push` names each id pushed to nuget.org,
+and `packages.local` names any that pack but must stay private. `PackagingTests` fails on a
+project that packs and is in neither list (a project packs unless it sets `IsPackable` to
+`false`), and `scripts/assert-packages.cs` checks the packed output against both lists in CI and
+again before the push. Adding a package means adding its id to `packages.push` and confirming the
+trusted-publishing policy's glob patterns cover it — one policy for every id, never one per id.
 
 ### Checking the credentials without releasing
 

@@ -80,6 +80,9 @@
          story: views, styles, and script are compiled or embedded into the assembly, so
          the package carries one dll and nothing a host has to copy or wire up. -->
     <PropertyGroup>
+        <!-- Said, not left to the SDK default: packages.push names this id, and PackagingTests
+             reads the declaration. -->
+        <IsPackable>true</IsPackable>
         <PackageId>Bennewitz.Ninja.FileServer</PackageId>
         <Title>Bennewitz.Ninja.FileServer</Title>
         <Description>Mount a browsable, downloadable view of a directory on a route of an existing ASP.NET Core application: AddFileServer(), then MapFileServer("/docs", o =&gt; o.RootPath = "/srv/docs"). Renders directory listings and Markdown with self-contained styles, resolves symlinks before every containment check, and serves files from endpoints rather than static-file middleware so RequireAuthorization() covers downloads as well as listings. Any number of independently configured and independently protected mounts per application.</Description>
