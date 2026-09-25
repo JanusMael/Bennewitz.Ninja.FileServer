@@ -1,5 +1,27 @@
 # Progress
 
+## On `main`, not yet released
+
+Build and CI changes from `plans/00004` in Bennewitz.Ninja.Templates, the family's standard build
+properties. None changes what a user of the package or the server sees.
+
+- `IsContinuousIntegration` is gone and AutoVersioning is `2026.3.916` (`1f16364`).
+- Central package management (`f10c674`): every version is in `Directory.Packages.props`, and the
+  sample keeps its `$(FileServerVersion)` through a conditional `PackageVersion`; the tests gain
+  AutoVersioning. Every package resolves as before. Both Dockerfiles copy `Directory.Packages.props`
+  before the restore (`762cdd9`); CI builds only `Dockerfile`, so `Dockerfile.bundle`'s copy of the
+  fix is unbuilt.
+- `scripts/repo-conventions.cs` evaluates every project against the family's build properties
+  (`f10c674`, `514fec0`).
+
+**The library is deliberately not marked trimmable.** Measured for step 7 of that plan: with its three
+`MapGet(string, Delegate)` calls moved to `RequestDelegate` handlers, the trim analyzer and an ILLink
+pass report nothing. But a consumer publishing with `TrimMode=partial` then trims the library and
+keeps each compiled Razor view without its constructor, and every listing and Markdown page answers
+500. An embedded `ILLink.Descriptors.xml` preserving `AspNetCoreGeneratedDocument` fixes that, but
+only a trimmed publish that serves a page can prove it stays fixed, and the library brings in MVC,
+which is not supported trimmed. Marking it would need both, and a CI job to hold them.
+
 ## Completed — [plan 00001](plans/00001-unlisted-files.md): unlisted files and sensitive-path refusal
 
 All eight steps are implemented and verified. Merged in
