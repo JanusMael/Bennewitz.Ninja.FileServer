@@ -55,21 +55,21 @@
           manifest (Microsoft.Extensions.FileProviders.Embedded.Manifest.xml) at build time.
           The runtime type (ManifestEmbeddedFileProvider) comes from the shared framework.
         -->
-        <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="10.0.8">
+        <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>build</IncludeAssets>
         </PackageReference>
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Markdig" Version="1.2.0" />
+        <PackageReference Include="Markdig" />
         <!-- Tokenises fenced code blocks. Its class names are translated to GitHub's in
              MarkdownSyntaxHighlighter, so no stylesheet of its own is needed. -->
-        <PackageReference Include="ColorCode.HTML" Version="2.0.15" />
+        <PackageReference Include="ColorCode.HTML" />
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Bennewitz.Ninja.AutoVersioning" Version="2026.3.916">
+        <PackageReference Include="Bennewitz.Ninja.AutoVersioning">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>

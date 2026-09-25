@@ -25,7 +25,7 @@
           The version comes from the property above so an override reaches it. Hardcoding it here
           leaves the property dead and the override silently ignored.
         -->
-        <PackageReference Include="Bennewitz.Ninja.FileServer" Version="$(FileServerVersion)" />
+        <PackageReference Include="Bennewitz.Ninja.FileServer" />
     </ItemGroup>
 
 </Project>

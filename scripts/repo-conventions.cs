@@ -29,6 +29,8 @@
 //
 //   --repo OWNER/NAME   act on another repository; its files are read through the API
 //   --root DIR          read the files from DIR instead of the current directory
+//   --offline           check: only what the checkout shows (documents, required checks, build
+//                       properties, drift); nothing is asked of GitHub
 //   --api-fixtures DIR  answer API reads from DIR/<path>.json instead of calling gh (tests)
 //   --replace-branch-protection   apply: delete classic branch protection once the ruleset exists
 //
@@ -49,7 +51,7 @@ if (verb is not ("check" or "apply"))
 string? repoName = null;
 string? root = null;
 string? fixtures = null;
-bool admin = false, release = false, dryRun = false, replaceProtection = false;
+bool admin = false, release = false, dryRun = false, replaceProtection = false, offline = false;
 
 for (int i = 1; i < args.Length; i++)
 {
@@ -62,6 +64,7 @@ for (int i = 1; i < args.Length; i++)
         case "--release": release = true; break;
         case "--dry-run": dryRun = true; break;
         case "--replace-branch-protection": replaceProtection = true; break;
+        case "--offline": offline = true; break;
         default: return Usage($"unknown or incomplete argument '{args[i]}'.");
     }
 }
@@ -71,19 +74,24 @@ if (verb == "apply" && fixtures is not null && !dryRun)
     return Usage("--api-fixtures cannot write; pass --dry-run.");
 }
 
+if (offline && (verb == "apply" || (repoName is not null && root is null)))
+{
+    return Usage("--offline checks a checkout; it cannot apply, and it cannot read another repository through the API.");
+}
+
 bool remoteTree = repoName is not null && root is null;
 string localRoot = Path.GetFullPath(root ?? Directory.GetCurrentDirectory());
 repoName ??= Environment.GetEnvironmentVariable("GITHUB_REPOSITORY") is { Length: > 0 } fromCi
     ? fromCi
-    : Gh.RepoOf(localRoot);
+    : offline ? null : Gh.RepoOf(localRoot);
 
-if (repoName is null)
+if (repoName is null && !offline)
 {
     return Usage("could not tell which repository this is; pass --repo OWNER/NAME.");
 }
 
-Api api = new(repoName, fixtures);
-(int repoStatus, string repoBody) = api.Get("");
+Api api = new(repoName ?? "", fixtures);
+(int repoStatus, string repoBody) = offline ? (0, "") : api.Get("");
 JsonObject? live = repoStatus == 200 ? JsonNode.Parse(repoBody)?.AsObject() : null;
 string branch = live?["default_branch"]?.GetValue<string>() ?? "main";
 
@@ -123,6 +131,17 @@ return verb == "apply" ? Apply() : Check();
 int Check()
 {
     Documentation.Check(tree, config, findings);
+
+    if (offline)
+    {
+        if (config is not null)
+        {
+            Workflows.CheckRequired(tree, config.RequiredChecks, findings);
+        }
+        Props.Check(localRoot, tree, config, repoName, remoteTree, findings);
+        Drift.Check(tree, remoteTree, findings);
+        return Report();
+    }
 
     if (live is null)
     {
@@ -172,6 +191,7 @@ int Check()
     Rulesets.Check(api, config, admin, findings);
 
     Settings.Check(api, live, branch, admin, findings);
+    Props.Check(localRoot, tree, config, repoName, remoteTree, findings);
     Drift.Check(tree, remoteTree, findings);
     return Report();
 }
@@ -268,17 +288,18 @@ int Report()
         Console.WriteLine($"{prefix}{finding.Kind} {finding.Area}: {finding.Message}");
     }
 
-    string depth = release ? "release" : admin ? "admin" : "token";
+    string depth = offline ? "offline" : release ? "release" : admin ? "admin" : "token";
+    string subject = repoName ?? localRoot;
     Console.WriteLine(failures == 0
-        ? $"repo-conventions: {repoName} conforms ({verb}, {depth} depth)."
-        : $"repo-conventions: {repoName} has {failures} finding(s) ({verb}, {depth} depth).");
+        ? $"repo-conventions: {subject} conforms ({verb}, {depth} depth)."
+        : $"repo-conventions: {subject} has {failures} finding(s) ({verb}, {depth} depth).");
     return failures == 0 ? 0 : 1;
 }
 
 static int Usage(string problem)
 {
     Console.Error.WriteLine("repo-conventions: " + problem);
-    Console.Error.WriteLine("usage: repo-conventions (check [--admin | --release] | apply [--dry-run] [--replace-branch-protection]) [--repo OWNER/NAME] [--root DIR] [--api-fixtures DIR]");
+    Console.Error.WriteLine("usage: repo-conventions (check [--admin | --release | --offline] | apply [--dry-run] [--replace-branch-protection]) [--repo OWNER/NAME] [--root DIR] [--api-fixtures DIR]");
     return 2;
 }
 
@@ -373,7 +394,9 @@ sealed record Config(
     IReadOnlyList<string> Topics,
     IReadOnlyList<string> RequiredChecks,
     IReadOnlyList<string> Content,
-    IReadOnlyDictionary<string, string> Undocumented)
+    IReadOnlyDictionary<string, string> Undocumented,
+    IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> PropsExempt,
+    bool TrimmingRequired)
 {
     public static Config Parse(string text, List<Finding> findings)
     {
@@ -402,13 +425,38 @@ sealed record Config(
             undocumented[directory.TrimEnd('/')] = why;
         }
 
+        // "props": { "<project>": { "<rule>": "<reason>" } }, as "undocumented" exempts a directory.
+        Dictionary<string, IReadOnlyDictionary<string, string>> propsExempt = new(StringComparer.OrdinalIgnoreCase);
+        foreach ((string project, JsonNode? rules) in json["props"]?.AsObject() ?? [])
+        {
+            Dictionary<string, string> exempt = new(StringComparer.Ordinal);
+            foreach ((string rule, JsonNode? reason) in rules?.AsObject() ?? [])
+            {
+                string why = reason?.GetValue<string>() ?? "";
+                if (why.Trim().Length == 0)
+                {
+                    findings.Add(Finding.Fail("repository.json", $"\"props\" exempts {project}'s {rule} without a reason."));
+                }
+                exempt[rule] = why;
+            }
+            propsExempt[project] = exempt;
+        }
+
+        string trimming = json["trimming"]?.GetValue<string>() ?? "";
+        if (trimming is not ("" or "required"))
+        {
+            findings.Add(Finding.Fail("repository.json", $"\"trimming\" is \"{trimming}\"; it is \"required\", or absent while a repository works towards it."));
+        }
+
         return new Config(
             description,
             json["homepage"]?.GetValue<string>() ?? "",
             topics,
             Strings(json["requiredChecks"]),
             [.. Strings(json["content"]).Select(p => p.TrimEnd('/') + "/")],
-            undocumented);
+            undocumented,
+            propsExempt,
+            trimming == "required");
     }
 
     private static string[] Strings(JsonNode? node) =>
@@ -740,6 +788,250 @@ static class Settings
     private static string Lower(bool value) => value ? "true" : "false";
 }
 
+/// <summary>
+/// The family's standard build properties, read from EVALUATED projects after a restore
+/// (plans/00004 in Bennewitz.Ninja.Templates).
+/// </summary>
+/// <remarks>
+/// ⛔ Evaluated, never read as text. A property can be set, overridden or imported anywhere: a csproj,
+/// a nested Directory.Build.props, a package's build props. Only MSBuild's answer says what the
+/// build does; a file that looks right can build wrong.
+/// ⛔ After a restore. A package's build props are imported only once it is restored, so without
+/// one, any property a package sets would evaluate as unset and pass.
+/// ⛔ As CI evaluates. The family set IsContinuousIntegration to $(GITHUB_ACTIONS), empty on a
+/// developer machine, so every evaluation runs with GITHUB_ACTIONS=true, or the check could never
+/// fail on that property locally.
+/// </remarks>
+static class Props
+{
+    public const string AutoVersioningFloor = "2026.3.916";
+    private const string AutoVersioning = "Bennewitz.Ninja.AutoVersioning";
+
+    private static readonly string[] Names =
+    [
+        "TargetFramework", "TargetFrameworks", "Nullable", "ImplicitUsings", "TreatWarningsAsErrors",
+        "ManagePackageVersionsCentrally", "GenerateAutoVersionedAssemblyInfo", "AssemblyCompany",
+        "IsContinuousIntegration", "IsPackable", "OutputType", "IsTestProject", "PackAsTool",
+        "IsRoslynComponent", "PackageType", "Authors", "PackageLicenseExpression", "RepositoryUrl",
+        "PackageReadmeFile", "DebugType", "IsTrimmable", "EnableTrimAnalyzer",
+    ];
+
+    private static readonly Dictionary<string, string> Ci = new(StringComparer.Ordinal) { ["GITHUB_ACTIONS"] = "true" };
+
+    public static void Check(string root, Tree tree, Config? config, string? repoName, bool remoteTree, List<Finding> findings)
+    {
+        if (remoteTree)
+        {
+            findings.Add(Finding.Note("props", "Build properties are evaluated from a checkout, after a restore; `check --repo` cannot reach them."));
+            return;
+        }
+
+        IReadOnlyList<string> content = config?.Content ?? [];
+        string? solution = tree.Files.FirstOrDefault(f => !f.Contains('/') &&
+            (f.EndsWith(".slnx", StringComparison.OrdinalIgnoreCase) || f.EndsWith(".sln", StringComparison.OrdinalIgnoreCase)));
+
+        List<string> projects;
+        if (solution is not null)
+        {
+            (int listExit, string listed) = Shell.Run("dotnet", root, null, Ci, "sln", solution, "list");
+            if (listExit != 0)
+            {
+                findings.Add(Finding.Fail("props", $"`dotnet sln {solution} list` failed: {Tail(listed)}"));
+                return;
+            }
+            projects = [.. listed.Split('\n').Select(l => l.Trim()).Where(l => l.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase))];
+        }
+        else
+        {
+            projects = [.. tree.Files.Where(f => f.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase)
+                && !content.Any(prefix => f.StartsWith(prefix, StringComparison.Ordinal)))];
+        }
+
+        if (projects.Count == 0)
+        {
+            findings.Add(Finding.Note("props", "No project to evaluate."));
+            return;
+        }
+
+        foreach (string target in solution is not null ? [solution] : projects)
+        {
+            (int exit, string output) = Shell.Run("dotnet", root, null, Ci, "restore", target, "--nologo", "-v", "quiet");
+            if (exit != 0)
+            {
+                findings.Add(Finding.Fail("props", $"`dotnet restore {target}` failed, so no property could be evaluated: {Tail(output)}"));
+                return;
+            }
+        }
+
+        IReadOnlyDictionary<string, string> none = new Dictionary<string, string>();
+        List<string> roles = [];
+        foreach (string project in projects)
+        {
+            string name = Path.GetFileNameWithoutExtension(project.Replace('\\', '/'));
+            string[] arguments = ["msbuild", project, "-p:Configuration=Release", .. Names.Select(n => "-getProperty:" + n),
+                "-getItem:PackageReference", "-getItem:PackageVersion"];
+            (int exit, string output) = Shell.Run("dotnet", root, null, Ci, arguments);
+            JsonObject? evaluated = exit == 0 ? Parse(output) : null;
+            if (evaluated?["Properties"] is not JsonObject properties)
+            {
+                findings.Add(Finding.Fail("props", $"{name} could not be evaluated: {Tail(output)}"));
+                continue;
+            }
+
+            string role = Role(properties);
+            roles.Add($"{name} ({role})");
+            IReadOnlyDictionary<string, string> exempt = config?.PropsExempt.GetValueOrDefault(name) ?? none;
+
+            foreach ((string rule, string? problem) in Rules(properties, evaluated["Items"], role, repoName))
+            {
+                if (problem is null)
+                {
+                    if (exempt.ContainsKey(rule))
+                    {
+                        findings.Add(Finding.Note("props", $"{name}: the exemption for {rule} is no longer needed; remove it from repository.json."));
+                    }
+                }
+                else if (!exempt.ContainsKey(rule))
+                {
+                    findings.Add(Finding.Fail("props", $"{name} ({role}): {problem}"));
+                }
+            }
+
+            if (role == "library" && !(Value(properties, "IsTrimmable") == "true" && Value(properties, "EnableTrimAnalyzer") == "true")
+                && !exempt.ContainsKey("Trimming"))
+            {
+                string message = $"{name} is not yet trimmable: it needs IsTrimmable and EnableTrimAnalyzer, as the template's src/Directory.Build.props sets them.";
+                findings.Add(config?.TrimmingRequired == true
+                    ? Finding.Fail("props", message + " repository.json requires trimming.")
+                    : Finding.Note("props", message + " repository.json's \"trimming\": \"required\" makes this fail."));
+            }
+        }
+
+        findings.Add(Finding.Note("props", $"{projects.Count} projects evaluated after a restore, as CI evaluates them: {string.Join(", ", roles)}."));
+    }
+
+    /// <summary>
+    /// The first role that matches, in this order. ⚠ The order matters: an xUnit v3 test project is a
+    /// non-packable executable, and would read as an app if <c>app</c> were tested first.
+    /// </summary>
+    private static string Role(JsonObject p) =>
+        Value(p, "PackageType") == "Template" ? "template"
+        : Value(p, "IsRoslynComponent") == "true" ? "analyzer"
+        : Value(p, "IsTestProject") == "true" ? "test"
+        : Value(p, "PackAsTool") == "true" ? "tool"
+        : Value(p, "IsPackable") == "true" ? "library"
+        : Value(p, "OutputType") is "Exe" or "WinExe" ? "app"
+        : "other";
+
+    /// <summary>Every rule for this role, each with its problem, or null where the project meets it.</summary>
+    private static IEnumerable<(string Rule, string? Problem)> Rules(JsonObject p, JsonNode? items, string role, string? repoName)
+    {
+        string frameworks = Value(p, "TargetFrameworks") is { Length: > 0 } many ? many : Value(p, "TargetFramework");
+        string[] targets = frameworks.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        string wantedFramework = role == "analyzer" ? "netstandard2.0" : "net10.0";
+        yield return ("TargetFramework", targets.Contains(wantedFramework)
+            ? null
+            : $"targets [{frameworks}]; {(role == "analyzer" ? "an analyzer targets" : "the family targets")} {wantedFramework}.");
+
+        yield return Expect(p, "Nullable", "enable");
+        yield return Expect(p, "ImplicitUsings", "enable");
+        yield return Expect(p, "TreatWarningsAsErrors", "true");
+        yield return Expect(p, "ManagePackageVersionsCentrally", "true");
+        yield return Expect(p, "AssemblyCompany", "Bennewitz.Ninja");
+
+        string ci = Value(p, "IsContinuousIntegration");
+        yield return ("IsContinuousIntegration", ci.Length == 0
+            ? null
+            : $"IsContinuousIntegration evaluates to \"{ci}\" as CI builds it. Nothing reads it since AutoVersioning {AutoVersioningFloor}; remove it.");
+
+        string? version = AutoVersioningVersion(items);
+        yield return ("AutoVersioning",
+            version is null ? $"does not reference {AutoVersioning}."
+            : Value(p, "GenerateAutoVersionedAssemblyInfo") != "true" ? "GenerateAutoVersionedAssemblyInfo is not true, so AutoVersioning generates nothing."
+            : !AtLeast(version, AutoVersioningFloor) ? $"references {AutoVersioning} {version}; the family's floor is {AutoVersioningFloor}."
+            : null);
+
+        if (role is not ("library" or "tool"))
+        {
+            yield break;
+        }
+
+        yield return ("Authors", Value(p, "Authors").Trim().Length > 0 ? null : "sets no Authors, so the package is authored by its assembly name.");
+        yield return Expect(p, "PackageLicenseExpression", "MIT");
+        if (repoName is not null)
+        {
+            string url = Value(p, "RepositoryUrl");
+            yield return ("RepositoryUrl", url.Contains("github.com/" + repoName, StringComparison.OrdinalIgnoreCase)
+                ? null
+                : $"RepositoryUrl is \"{url}\", not this repository, github.com/{repoName}.");
+        }
+        yield return Expect(p, "PackageReadmeFile", "README.md");
+        yield return Expect(p, "DebugType", "embedded");
+    }
+
+    private static (string Rule, string? Problem) Expect(JsonObject p, string name, string wanted)
+    {
+        string actual = Value(p, name);
+        return (name, actual == wanted ? null : $"{name} is \"{actual}\"; the family's is \"{wanted}\".");
+    }
+
+    /// <summary>
+    /// The version a project references AutoVersioning at, or null when it does not.
+    /// ⚠ Under central package management a PackageReference carries no version: it is on the
+    /// PackageVersion item. Without central management it is on the reference. A VersionOverride wins.
+    /// </summary>
+    private static string? AutoVersioningVersion(JsonNode? items)
+    {
+        JsonNode? reference = (items?["PackageReference"]?.AsArray() ?? []).FirstOrDefault(i => Text(i?["Identity"]) == AutoVersioning);
+        if (reference is null)
+        {
+            return null;
+        }
+        JsonNode? pin = (items?["PackageVersion"]?.AsArray() ?? []).FirstOrDefault(i => Text(i?["Identity"]) == AutoVersioning);
+        foreach (string candidate in (string[])[Text(reference["VersionOverride"]), Text(reference["Version"]), Text(pin?["Version"])])
+        {
+            if (candidate.Length > 0)
+            {
+                return candidate;
+            }
+        }
+        return "an unknown version";
+    }
+
+    private static bool AtLeast(string version, string floor)
+    {
+        string bare = version.Trim('[', ']', '(', ')', ' ').Split(',')[0].Split('-', '+')[0];
+        return Version.TryParse(bare, out Version? actual) && Version.TryParse(floor, out Version? minimum) && actual >= minimum;
+    }
+
+    private static JsonObject? Parse(string output)
+    {
+        int start = output.IndexOf('{');
+        if (start < 0)
+        {
+            return null;
+        }
+        try
+        {
+            return JsonNode.Parse(output[start..]) as JsonObject;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    private static string Value(JsonObject p, string name) => Text(p[name]);
+
+    private static string Text(JsonNode? node) => node is JsonValue value && value.TryGetValue(out string? text) ? text ?? "" : "";
+
+    private static string Tail(string output)
+    {
+        string[] lines = [.. output.Split('\n').Select(l => l.Trim()).Where(l => l.Length > 0)];
+        return lines.Length == 0 ? "no output" : string.Join(" | ", lines.TakeLast(3));
+    }
+}
+
 static class Drift
 {
     private const string Canonical = "templates/bbpkg/scripts/repo-conventions.cs";
@@ -888,7 +1180,11 @@ static class Gh
 
 static class Shell
 {
-    public static (int Exit, string Output) Run(string file, string? directory, string? input, params string[] arguments)
+    public static (int Exit, string Output) Run(string file, string? directory, string? input, params string[] arguments) =>
+        Run(file, directory, input, null, arguments);
+
+    public static (int Exit, string Output) Run(string file, string? directory, string? input,
+        IReadOnlyDictionary<string, string>? environment, params string[] arguments)
     {
         ProcessStartInfo start = new(file)
         {
@@ -899,6 +1195,10 @@ static class Shell
         if (directory is not null)
         {
             start.WorkingDirectory = directory;
+        }
+        foreach ((string name, string value) in environment ?? new Dictionary<string, string>())
+        {
+            start.Environment[name] = value;
         }
         foreach (string argument in arguments)
         {

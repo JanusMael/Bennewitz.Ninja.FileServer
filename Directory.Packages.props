@@ -1,0 +1,31 @@
+<Project>
+  <!-- Central package management: every package version in this repository lives here, and a
+       PackageReference names only the package. See docs/repository-conventions.md in
+       Bennewitz.Ninja.Templates, whose build-property check requires it. -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageVersion Include="Bennewitz.Ninja.AutoVersioning" Version="2026.3.916" />
+    <PackageVersion Include="ColorCode.HTML" Version="2.0.15" />
+    <PackageVersion Include="Markdig" Version="1.2.0" />
+    <PackageVersion Include="Microsoft.Extensions.FileProviders.Embedded" Version="10.0.8" />
+  </ItemGroup>
+
+  <ItemGroup Label="Testing">
+    <PackageVersion Include="coverlet.collector" Version="6.0.4" />
+    <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.8" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <!-- samples/SampleWebApp consumes this repository's own package at $(FileServerVersion): its
+       default is in the sample's csproj, and a build can pass -p:FileServerVersion to restore the
+       package it just packed. Only a project that defines the property gets the entry; items are
+       evaluated after every property, so the csproj's value is the one used. -->
+  <ItemGroup Condition="'$(FileServerVersion)' != ''">
+    <PackageVersion Include="Bennewitz.Ninja.FileServer" Version="$(FileServerVersion)" />
+  </ItemGroup>
+</Project>
