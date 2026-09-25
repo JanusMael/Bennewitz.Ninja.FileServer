@@ -41,7 +41,7 @@ jobs:
 
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.x'
+          global-json-file: global.json
 
       # The version comes from the TAG, so the tag and the package agree by construction.
       - name: Extract version from tag

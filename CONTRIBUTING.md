@@ -45,8 +45,12 @@ working directory:
 dotnet test
 
 # One area
-dotnet test --filter FullyQualifiedName~FileServerPathTests
+dotnet test --filter-class "*FileServerPathTests"
 ```
+
+The tests are xunit.v3 on Microsoft.Testing.Platform, selected by `global.json`, which also pins
+the SDK to 10.0.400 or a later feature band. VSTest's `--filter` expressions do not apply; the
+runner takes `--filter-class`, `--filter-method` and `--filter-namespace`, with `*` wildcards.
 
 The suite covers the component library. The CLI host has none of its own by design: it
 translates settings into a single `MapFileServer` call, so its behaviour is the component's.

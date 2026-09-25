@@ -59,11 +59,11 @@ user is in [`README.md`](README.md); how to build, test and release is in
 ```bash
 dotnet restore
 dotnet build -c Release --no-restore
-dotnet test -c Release --no-build
+dotnet test --solution Bennewitz.Ninja.FileServer.sln -c Release --no-build
 dotnet pack src/Bennewitz.Ninja.FileServer -c Release --no-build -o publish/local-feed
 dotnet build samples/SampleWebApp -c Release
 pwsh publish/Smoke-Test.ps1
-dotnet test --filter FullyQualifiedName~SensitivePathTests
+dotnet test --filter-class "*SensitivePathTests"
 pwsh publish/Pack-Local.ps1
 pwsh publish/publish.ps1 -All
 docker build -f docker/Dockerfile -t fileserver:ci .
@@ -71,7 +71,9 @@ dotnet run --file scripts/repo-conventions.cs -- check
 gh workflow run release.yml
 ```
 
-- The first seven lines are CI's `build` job in order. Tests run on VSTest (`Microsoft.NET.Test.Sdk`).
+- The first six lines are CI's `build` job in order. Tests are xunit.v3 on Microsoft.Testing.Platform,
+  which `global.json` selects along with the SDK (10.0.400 or a later feature band); filter with
+  `--filter-class`, `--filter-method` or `--filter-namespace`, not VSTest's `--filter`.
 - `gh workflow run release.yml` is the credential preflight: it logs in to nuget.org and stops.
 - Write `-p:` rather than `/p:`: Git Bash on Windows rewrites a leading-slash argument into a path.
 

@@ -14,11 +14,14 @@
   </ItemGroup>
 
   <ItemGroup Label="Testing">
-    <PackageVersion Include="coverlet.collector" Version="6.0.4" />
     <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.8" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
-    <PackageVersion Include="xunit" Version="2.9.3" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.4" />
+    <!-- xunit.v3 on Microsoft.Testing.Platform — see global.json. The VSTest bridge packages are
+         deliberately absent; TrxReport is what gives CI its .trx files. -->
+    <PackageVersion Include="xunit.v3" Version="3.2.2" />
+    <!-- ⚠ Same Microsoft.Testing.Platform line as xunit.v3 3.2.2 (1.9.1). A NEWER TrxReport pins
+         the platform above what xunit's bundled MSBuild extension can load, and the failure reads
+         as an unrelated loader error. -->
+    <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="1.9.1" />
   </ItemGroup>
 
   <!-- samples/SampleWebApp consumes this repository's own package at $(FileServerVersion): its

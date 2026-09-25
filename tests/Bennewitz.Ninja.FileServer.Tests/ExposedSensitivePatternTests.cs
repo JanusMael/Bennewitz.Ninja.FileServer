@@ -11,6 +11,8 @@ namespace Bennewitz.Ninja.FileServer.Tests;
 /// </summary>
 public sealed class ExposedSensitivePatternTests
 {
+    private static CancellationToken Cancel => TestContext.Current.CancellationToken;
+
     private const string Secret = "SENSITIVE-CONTENT";
 
     [Fact]
@@ -20,8 +22,8 @@ public sealed class ExposedSensitivePatternTests
 
         await using var host = await StartAsync(root, o => o.ExposedSensitivePatterns = [".well-known/**"]);
 
-        Assert.Equal("CONTACT", await host.Client.GetStringAsync("/docs/.well-known/security.txt"));
-        Assert.Equal("TOKEN", await host.Client.GetStringAsync("/docs/.well-known/acme-challenge/tok"));
+        Assert.Equal("CONTACT", await host.Client.GetStringAsync("/docs/.well-known/security.txt", Cancel));
+        Assert.Equal("TOKEN", await host.Client.GetStringAsync("/docs/.well-known/acme-challenge/tok", Cancel));
 
         await SensitivePathTests.AssertRefused(host, "/docs/.git/config");
         await SensitivePathTests.AssertRefused(host, "/docs/.env");
@@ -78,7 +80,7 @@ public sealed class ExposedSensitivePatternTests
         Assert.Contains("href=\"/docs/.well-known/acme-challenge\"", own, StringComparison.Ordinal);
         Assert.DoesNotContain("security.txt", own, StringComparison.Ordinal);
 
-        Assert.Equal("CONTACT", await host.Client.GetStringAsync("/docs/.well-known/security.txt"));
+        Assert.Equal("CONTACT", await host.Client.GetStringAsync("/docs/.well-known/security.txt", Cancel));
     }
 
     [Fact]
@@ -93,7 +95,7 @@ public sealed class ExposedSensitivePatternTests
             o.ExposedSensitivePatterns = [".well-known/**"];
         });
 
-        Assert.Equal(HttpStatusCode.NotFound, (await host.Client.GetAsync("/docs/.well-known/security.txt")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await host.Client.GetAsync("/docs/.well-known/security.txt", Cancel)).StatusCode);
         await SensitivePathTests.AssertServed(host, "/docs/readme.md");
     }
 

@@ -13,6 +13,8 @@ namespace Bennewitz.Ninja.FileServer.Tests;
 /// </summary>
 public sealed class UnlistedPatternTests
 {
+    private static CancellationToken Cancel => TestContext.Current.CancellationToken;
+
     private static readonly IReadOnlySet<string> Everything =
         new HashSet<string>(0, StringComparer.OrdinalIgnoreCase);
 
@@ -97,7 +99,7 @@ public sealed class UnlistedPatternTests
         Assert.Contains("href=\"/docs/visible.txt\"", listing, StringComparison.Ordinal);
         Assert.DoesNotContain("report.pdf", listing, StringComparison.Ordinal);
 
-        Assert.Equal("REPORT-CONTENT", await host.Client.GetStringAsync("/docs/report.pdf"));
+        Assert.Equal("REPORT-CONTENT", await host.Client.GetStringAsync("/docs/report.pdf", Cancel));
     }
 
     [Fact]
@@ -115,7 +117,7 @@ public sealed class UnlistedPatternTests
 
         var own = await ListingOf(host, "/docs/private");
         Assert.Contains("href=\"/docs/private/inside.txt\"", own, StringComparison.Ordinal);
-        Assert.Equal("INSIDE", await host.Client.GetStringAsync("/docs/private/inside.txt"));
+        Assert.Equal("INSIDE", await host.Client.GetStringAsync("/docs/private/inside.txt", Cancel));
     }
 
     [Fact]
@@ -148,11 +150,11 @@ public sealed class UnlistedPatternTests
         Assert.Contains("href=\"/docs/visible.txt\"", listing, StringComparison.Ordinal);
         Assert.DoesNotContain("notes.md", listing, StringComparison.Ordinal);
 
-        var rendered = await host.Client.GetAsync("/docs/notes.md");
+        var rendered = await host.Client.GetAsync("/docs/notes.md", Cancel);
         Assert.Equal("text/html", rendered.Content.Headers.ContentType?.MediaType);
-        Assert.Contains("<h1", await rendered.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+        Assert.Contains("<h1", await rendered.Content.ReadAsStringAsync(Cancel), StringComparison.Ordinal);
 
-        Assert.Equal("# Heading", await host.Client.GetStringAsync("/docs/notes.md?raw=1"));
+        Assert.Equal("# Heading", await host.Client.GetStringAsync("/docs/notes.md?raw=1", Cancel));
     }
 
     [Fact]
@@ -168,8 +170,8 @@ public sealed class UnlistedPatternTests
             o.UnlistedPatterns = ["report.pdf"];
         });
 
-        Assert.Equal(HttpStatusCode.NotFound, (await host.Client.GetAsync("/docs")).StatusCode);
-        Assert.Equal("REPORT-CONTENT", await host.Client.GetStringAsync("/docs/report.pdf"));
+        Assert.Equal(HttpStatusCode.NotFound, (await host.Client.GetAsync("/docs", Cancel)).StatusCode);
+        Assert.Equal("REPORT-CONTENT", await host.Client.GetStringAsync("/docs/report.pdf", Cancel));
         await SensitivePathTests.AssertRefused(host, "/docs/.env");
     }
 

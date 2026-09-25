@@ -13,6 +13,8 @@ namespace Bennewitz.Ninja.FileServer.Tests;
 /// </summary>
 public sealed class MountRegistrationTests
 {
+    private static CancellationToken Cancel => TestContext.Current.CancellationToken;
+
     [Theory]
     [InlineData("docs")]
     [InlineData("/docs")]
@@ -27,10 +29,10 @@ public sealed class MountRegistrationTests
         await using var host = await FileServerTestHost.StartAsync(endpoints =>
             endpoints.MapFileServer(prefix, o => o.RootPath = root.Path));
 
-        var response = await host.Client.GetAsync("/docs/hello.txt");
+        var response = await host.Client.GetAsync("/docs/hello.txt", Cancel);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal("hi", await response.Content.ReadAsStringAsync());
+        Assert.Equal("hi", await response.Content.ReadAsStringAsync(Cancel));
     }
 
     [Fact]
@@ -42,8 +44,8 @@ public sealed class MountRegistrationTests
         await using var host = await FileServerTestHost.StartAsync(endpoints =>
             endpoints.MapFileServer("/docs", o => o.RootPath = root.Path));
 
-        Assert.Equal(HttpStatusCode.OK, (await host.Client.GetAsync("/docs")).StatusCode);
-        Assert.Equal(HttpStatusCode.OK, (await host.Client.GetAsync("/docs/")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await host.Client.GetAsync("/docs", Cancel)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await host.Client.GetAsync("/docs/", Cancel)).StatusCode);
     }
 
     [Fact]
@@ -136,11 +138,11 @@ public sealed class MountRegistrationTests
             endpoints.MapFileServer("/second", o => o.RootPath = second.Path);
         });
 
-        Assert.Equal("first", await host.Client.GetStringAsync("/first/one.txt"));
-        Assert.Equal("second", await host.Client.GetStringAsync("/second/two.txt"));
+        Assert.Equal("first", await host.Client.GetStringAsync("/first/one.txt", Cancel));
+        Assert.Equal("second", await host.Client.GetStringAsync("/second/two.txt", Cancel));
 
         // Neither mount can reach the other's files.
-        Assert.Equal(HttpStatusCode.NotFound, (await host.Client.GetAsync("/first/two.txt")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await host.Client.GetAsync("/first/two.txt", Cancel)).StatusCode);
     }
 
     [Fact]
@@ -157,8 +159,8 @@ public sealed class MountRegistrationTests
             endpoints.MapFileServer("/private", o => o.RootPath = docsPrivate);
         });
 
-        Assert.Equal(HttpStatusCode.OK, (await host.Client.GetAsync("/docs")).StatusCode);
-        Assert.Equal(HttpStatusCode.OK, (await host.Client.GetAsync("/private")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await host.Client.GetAsync("/docs", Cancel)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await host.Client.GetAsync("/private", Cancel)).StatusCode);
     }
 
     [Fact]

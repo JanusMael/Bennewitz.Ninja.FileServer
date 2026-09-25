@@ -9,7 +9,10 @@ namespace Bennewitz.Ninja.FileServer.Tests.Infrastructure;
 /// </summary>
 public sealed class ShortNameFactAttribute : FactAttribute
 {
-    public ShortNameFactAttribute()
+    public ShortNameFactAttribute(
+        [CallerFilePath] string? sourceFilePath = null,
+        [CallerLineNumber] int sourceLineNumber = -1)
+        : base(sourceFilePath, sourceLineNumber)
     {
         if (!ShortNames.Available)
             Skip = "The temp volume does not generate 8.3 short names (or this is not Windows).";

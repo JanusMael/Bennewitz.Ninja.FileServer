@@ -12,7 +12,10 @@ namespace Bennewitz.Ninja.FileServer.Tests.Infrastructure;
 /// </remarks>
 public sealed class WindowsFactAttribute : FactAttribute
 {
-    public WindowsFactAttribute()
+    public WindowsFactAttribute(
+        [CallerFilePath] string? sourceFilePath = null,
+        [CallerLineNumber] int sourceLineNumber = -1)
+        : base(sourceFilePath, sourceLineNumber)
     {
         if (!OperatingSystem.IsWindows())
             Skip = "Exercises Windows-only filesystem semantics.";

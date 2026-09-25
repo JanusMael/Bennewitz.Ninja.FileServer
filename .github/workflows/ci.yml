@@ -15,7 +15,7 @@ jobs:
 
       - uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.x'
+          global-json-file: global.json
 
       - name: Restore
         run: dotnet restore
@@ -24,7 +24,7 @@ jobs:
         run: dotnet build -c Release --no-restore
 
       - name: Test
-        run: dotnet test -c Release --no-build
+        run: dotnet test --solution Bennewitz.Ninja.FileServer.sln -c Release --no-build
 
       # Packing is where the project graph is validated as NuGet sees it — a build alone would
       # not have caught the id collision between the library's PackageId and the executable's
@@ -56,7 +56,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: '10.x'
+          global-json-file: global.json
 
       - name: Pack
         run: dotnet pack Bennewitz.Ninja.FileServer.sln -c Release --nologo --output ./packages/Release
@@ -119,7 +119,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: '10.x'
+          global-json-file: global.json
 
       - name: Check the repository conventions
         env:

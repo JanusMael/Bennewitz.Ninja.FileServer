@@ -5,6 +5,9 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+        <!-- xunit v3 test projects are executables, run on Microsoft.Testing.Platform (global.json). -->
+        <OutputType>Exe</OutputType>
 
         <!-- The library grants internals to this exact assembly name; containment, the extension
              filter, and the mount registry are internal and are the parts worth testing directly. -->
@@ -23,15 +26,15 @@
 
     <ItemGroup>
         <PackageReference Include="Bennewitz.Ninja.AutoVersioning" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" />
-        <PackageReference Include="coverlet.collector" />
         <PackageReference Include="Microsoft.AspNetCore.TestHost" />
-        <PackageReference Include="Microsoft.NET.Test.Sdk" />
-        <PackageReference Include="xunit" />
-        <PackageReference Include="xunit.runner.visualstudio" />
+        <PackageReference Include="Microsoft.Testing.Extensions.TrxReport" />
+        <PackageReference Include="xunit.v3" />
     </ItemGroup>
 
     <ItemGroup>
         <Using Include="Xunit" />
+        <!-- xunit v3's Fact takes the caller's source location; every derived attribute passes it on. -->
+        <Using Include="System.Runtime.CompilerServices" />
     </ItemGroup>
 
 </Project>

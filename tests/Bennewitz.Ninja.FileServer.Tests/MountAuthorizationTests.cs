@@ -13,6 +13,8 @@ namespace Bennewitz.Ninja.FileServer.Tests;
 /// </summary>
 public sealed class MountAuthorizationTests
 {
+    private static CancellationToken Cancel => TestContext.Current.CancellationToken;
+
     [Fact]
     public async Task RequireAuthorization_UnauthenticatedListing_IsChallenged()
     {
@@ -21,7 +23,7 @@ public sealed class MountAuthorizationTests
 
         await using var host = await StartProtectedAsync(root);
 
-        var response = await host.Client.GetAsync("/private");
+        var response = await host.Client.GetAsync("/private", Cancel);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -36,10 +38,10 @@ public sealed class MountAuthorizationTests
 
         // The listing being protected is worth little if the file behind it is not. Static-file
         // middleware produces no endpoint, so this is the request that would have stayed open.
-        var response = await host.Client.GetAsync("/private/secret.txt");
+        var response = await host.Client.GetAsync("/private/secret.txt", Cancel);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-        Assert.DoesNotContain("classified", await response.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+        Assert.DoesNotContain("classified", await response.Content.ReadAsStringAsync(Cancel), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -50,7 +52,7 @@ public sealed class MountAuthorizationTests
 
         await using var host = await StartProtectedAsync(root);
 
-        var response = await host.Client.GetAsync("/private/nested/deep/secret.txt");
+        var response = await host.Client.GetAsync("/private/nested/deep/secret.txt", Cancel);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
@@ -63,8 +65,8 @@ public sealed class MountAuthorizationTests
 
         await using var host = await StartProtectedAsync(root);
 
-        Assert.Equal(HttpStatusCode.Unauthorized, (await host.Client.GetAsync("/private/notes.md")).StatusCode);
-        Assert.Equal(HttpStatusCode.Unauthorized, (await host.Client.GetAsync("/private/notes.md?raw")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await host.Client.GetAsync("/private/notes.md", Cancel)).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await host.Client.GetAsync("/private/notes.md?raw", Cancel)).StatusCode);
     }
 
     [Fact]
@@ -75,10 +77,10 @@ public sealed class MountAuthorizationTests
 
         await using var host = await StartProtectedAsync(root);
 
-        var response = await host.Client.SendAsync(host.AuthenticatedGet("/private/secret.txt"));
+        var response = await host.Client.SendAsync(host.AuthenticatedGet("/private/secret.txt"), Cancel);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Equal("classified", await response.Content.ReadAsStringAsync());
+        Assert.Equal("classified", await response.Content.ReadAsStringAsync(Cancel));
     }
 
     [Fact]
@@ -93,10 +95,10 @@ public sealed class MountAuthorizationTests
         // styled page: the stylesheet has to load for a visitor who is not signed in yet.
         var assetUrl = await AssetUrlAsync(host, "/private/notes.md", "css/fileserver.css");
 
-        var response = await host.Client.GetAsync(assetUrl);
+        var response = await host.Client.GetAsync(assetUrl, Cancel);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.Contains("bnfs-root", await response.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+        Assert.Contains("bnfs-root", await response.Content.ReadAsStringAsync(Cancel), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -108,7 +110,7 @@ public sealed class MountAuthorizationTests
         await using var host = await FileServerTestHost.StartAsync(endpoints =>
             endpoints.MapFileServer("/public", o => o.RootPath = root.Path));
 
-        Assert.Equal("open", await host.Client.GetStringAsync("/public/public.txt"));
+        Assert.Equal("open", await host.Client.GetStringAsync("/public/public.txt", Cancel));
     }
 
     [Fact]
@@ -125,8 +127,8 @@ public sealed class MountAuthorizationTests
             endpoints.MapFileServer("/closed", o => o.RootPath = closed.Path).RequireAuthorization();
         });
 
-        Assert.Equal(HttpStatusCode.OK, (await host.Client.GetAsync("/open/open.txt")).StatusCode);
-        Assert.Equal(HttpStatusCode.Unauthorized, (await host.Client.GetAsync("/closed/closed.txt")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await host.Client.GetAsync("/open/open.txt", Cancel)).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await host.Client.GetAsync("/closed/closed.txt", Cancel)).StatusCode);
     }
 
     private static Task<FileServerTestHost> StartProtectedAsync(TempDirectory root) =>

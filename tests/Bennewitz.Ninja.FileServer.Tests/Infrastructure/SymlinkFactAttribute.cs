@@ -12,7 +12,10 @@ namespace Bennewitz.Ninja.FileServer.Tests.Infrastructure;
 /// </remarks>
 public sealed class SymlinkFactAttribute : FactAttribute
 {
-    public SymlinkFactAttribute()
+    public SymlinkFactAttribute(
+        [CallerFilePath] string? sourceFilePath = null,
+        [CallerLineNumber] int sourceLineNumber = -1)
+        : base(sourceFilePath, sourceLineNumber)
     {
         if (!SymlinkSupport.Available)
             Skip = SymlinkSupport.SkipReason;

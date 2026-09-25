@@ -12,6 +12,8 @@ namespace Bennewitz.Ninja.FileServer.Tests;
 /// </summary>
 public sealed class MountRequestTests
 {
+    private static CancellationToken Cancel => TestContext.Current.CancellationToken;
+
     [Fact]
     public async Task Mount_ServesAFileWithItsContentTypeAndCacheHeader()
     {
@@ -20,7 +22,7 @@ public sealed class MountRequestTests
 
         await using var host = await StartAsync(root);
 
-        var response = await host.Client.GetAsync("/docs/hello.txt");
+        var response = await host.Client.GetAsync("/docs/hello.txt", Cancel);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal("text/plain", response.Content.Headers.ContentType?.MediaType);
@@ -37,7 +39,7 @@ public sealed class MountRequestTests
 
         await using var host = await StartAsync(root);
 
-        var html = await host.Client.GetStringAsync("/docs");
+        var html = await host.Client.GetStringAsync("/docs", Cancel);
 
         // "zeta" sorts after "alpha" alphabetically, so its position proves directories lead.
         Assert.True(
@@ -53,16 +55,16 @@ public sealed class MountRequestTests
 
         await using var host = await StartAsync(root);
 
-        var rendered = await host.Client.GetAsync("/docs/notes.md");
-        var renderedBody = await rendered.Content.ReadAsStringAsync();
+        var rendered = await host.Client.GetAsync("/docs/notes.md", Cancel);
+        var renderedBody = await rendered.Content.ReadAsStringAsync(Cancel);
 
         Assert.Equal("text/html", rendered.Content.Headers.ContentType?.MediaType);
         Assert.Contains("<h1", renderedBody, StringComparison.Ordinal);
 
-        var raw = await host.Client.GetAsync("/docs/notes.md?raw");
+        var raw = await host.Client.GetAsync("/docs/notes.md?raw", Cancel);
 
         Assert.Equal("text/markdown", raw.Content.Headers.ContentType?.MediaType);
-        Assert.Equal("# Heading\n\ntext", await raw.Content.ReadAsStringAsync());
+        Assert.Equal("# Heading\n\ntext", await raw.Content.ReadAsStringAsync(Cancel));
     }
 
     [Fact]
@@ -78,10 +80,10 @@ public sealed class MountRequestTests
                 o.RenderMarkdown = false;
             }));
 
-        var response = await host.Client.GetAsync("/docs/notes.md");
+        var response = await host.Client.GetAsync("/docs/notes.md", Cancel);
 
         Assert.Equal("text/markdown", response.Content.Headers.ContentType?.MediaType);
-        Assert.Equal("# Heading", await response.Content.ReadAsStringAsync());
+        Assert.Equal("# Heading", await response.Content.ReadAsStringAsync(Cancel));
     }
 
     [Fact]
@@ -98,9 +100,9 @@ public sealed class MountRequestTests
                 o.EnableDirectoryBrowsing = false;
             }));
 
-        Assert.Equal(HttpStatusCode.NotFound, (await host.Client.GetAsync("/docs")).StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, (await host.Client.GetAsync("/docs/sub")).StatusCode);
-        Assert.Equal("hi", await host.Client.GetStringAsync("/docs/hello.txt"));
+        Assert.Equal(HttpStatusCode.NotFound, (await host.Client.GetAsync("/docs", Cancel)).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await host.Client.GetAsync("/docs/sub", Cancel)).StatusCode);
+        Assert.Equal("hi", await host.Client.GetStringAsync("/docs/hello.txt", Cancel));
     }
 
     [Theory]
@@ -116,10 +118,10 @@ public sealed class MountRequestTests
 
         await using var host = await StartAsync(root);
 
-        var response = await host.Client.GetAsync(url);
+        var response = await host.Client.GetAsync(url, Cancel);
 
         Assert.NotEqual(HttpStatusCode.OK, response.StatusCode);
-        Assert.DoesNotContain("secret", await response.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+        Assert.DoesNotContain("secret", await response.Content.ReadAsStringAsync(Cancel), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -136,17 +138,17 @@ public sealed class MountRequestTests
                 o.AllowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { ".md" };
             }));
 
-        var listing = await host.Client.GetStringAsync("/docs");
+        var listing = await host.Client.GetStringAsync("/docs", Cancel);
 
         Assert.Contains("readme.md", listing, StringComparison.Ordinal);
         Assert.DoesNotContain("hello.txt", listing, StringComparison.Ordinal);
 
         // Hidden from the listing is not enough: the direct URL must be refused as well, or the
         // filter is only a display convention.
-        var direct = await host.Client.GetAsync("/docs/hello.txt");
+        var direct = await host.Client.GetAsync("/docs/hello.txt", Cancel);
 
         Assert.Equal(HttpStatusCode.NotFound, direct.StatusCode);
-        Assert.DoesNotContain("hidden", await direct.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+        Assert.DoesNotContain("hidden", await direct.Content.ReadAsStringAsync(Cancel), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -166,13 +168,13 @@ public sealed class MountRequestTests
                 o.AllowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "md" };
             }));
 
-        var listing = await host.Client.GetStringAsync("/docs");
+        var listing = await host.Client.GetStringAsync("/docs", Cancel);
 
         Assert.Contains("readme.md", listing, StringComparison.Ordinal);
         Assert.DoesNotContain("hello.txt", listing, StringComparison.Ordinal);
 
-        var allowed = await host.Client.GetAsync("/docs/readme.md");
-        var refused = await host.Client.GetAsync("/docs/hello.txt");
+        var allowed = await host.Client.GetAsync("/docs/readme.md", Cancel);
+        var refused = await host.Client.GetAsync("/docs/hello.txt", Cancel);
 
         Assert.Equal(HttpStatusCode.OK, allowed.StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, refused.StatusCode);
@@ -193,7 +195,7 @@ public sealed class MountRequestTests
                 o.AllowedExtensions = callersSet;
             }));
 
-        _ = await host.Client.GetStringAsync("/docs");
+        _ = await host.Client.GetStringAsync("/docs", Cancel);
 
         // Normalising by replacing the set, not by editing it: the caller may hold this instance
         // for its own purposes, and a mount is not entitled to rewrite it.
@@ -207,7 +209,7 @@ public sealed class MountRequestTests
 
         await using var host = await StartAsync(root);
 
-        Assert.Equal(HttpStatusCode.NotFound, (await host.Client.GetAsync("/docs/absent.txt")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await host.Client.GetAsync("/docs/absent.txt", Cancel)).StatusCode);
     }
 
     [Fact]
@@ -223,7 +225,7 @@ public sealed class MountRequestTests
                 o.IncludeDefaultStyles = false;
             }));
 
-        var html = await host.Client.GetStringAsync("/docs/notes.md");
+        var html = await host.Client.GetStringAsync("/docs/notes.md", Cancel);
 
         Assert.DoesNotContain("fileserver.css", html, StringComparison.Ordinal);
         Assert.DoesNotContain("data-bnfs-theme-toggle", html, StringComparison.Ordinal);
@@ -240,7 +242,7 @@ public sealed class MountRequestTests
 
         await using var host = await StartAsync(root);
 
-        var html = await host.Client.GetStringAsync("/docs/notes.md");
+        var html = await host.Client.GetStringAsync("/docs/notes.md", Cancel);
 
         Assert.Contains("fileserver.css", html, StringComparison.Ordinal);
         Assert.Contains("data-bnfs-theme-toggle", html, StringComparison.Ordinal);
@@ -255,7 +257,7 @@ public sealed class MountRequestTests
 
         await using var host = await StartAsync(root);
 
-        var html = await host.Client.GetStringAsync("/docs");
+        var html = await host.Client.GetStringAsync("/docs", Cancel);
 
         // The listing carries the same control as a document, so a pinned scheme survives
         // navigating between the two rather than reverting on every listing.
@@ -271,7 +273,7 @@ public sealed class MountRequestTests
 
         await using var host = await StartAsync(root);
 
-        var html = await host.Client.GetStringAsync("/docs");
+        var html = await host.Client.GetStringAsync("/docs", Cancel);
 
         // The actions row exists only when it has something in it, and at the root the Up link
         // is absent — the toggle must not disappear with it.
@@ -292,7 +294,7 @@ public sealed class MountRequestTests
                 o.IncludeDefaultStyles = false;
             }));
 
-        var html = await host.Client.GetStringAsync("/docs");
+        var html = await host.Client.GetStringAsync("/docs", Cancel);
 
         Assert.DoesNotContain("data-bnfs-theme-toggle", html, StringComparison.Ordinal);
         Assert.DoesNotContain("fileserver.js", html, StringComparison.Ordinal);
@@ -312,7 +314,7 @@ public sealed class MountRequestTests
                 o.CacheControl = "public, max-age=60";
             }));
 
-        var response = await host.Client.GetAsync("/docs/hello.txt");
+        var response = await host.Client.GetAsync("/docs/hello.txt", Cancel);
 
         Assert.Equal("public, max-age=60", response.Headers.CacheControl?.ToString());
     }
@@ -328,10 +330,10 @@ public sealed class MountRequestTests
 
         await using var host = await StartAsync(root);
 
-        var html = await host.Client.GetStringAsync("/docs/notes.md");
+        var html = await host.Client.GetStringAsync("/docs/notes.md", Cancel);
         var version = ExtractVersion(html);
 
-        var response = await host.Client.GetAsync($"/docs/_fs/{version}/{assetPath}");
+        var response = await host.Client.GetAsync($"/docs/_fs/{version}/{assetPath}", Cancel);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
@@ -344,15 +346,15 @@ public sealed class MountRequestTests
 
         await using var host = await StartAsync(root);
 
-        var html = await host.Client.GetStringAsync("/docs/notes.md");
+        var html = await host.Client.GetStringAsync("/docs/notes.md", Cancel);
         var version = ExtractVersion(html);
 
         foreach (var asset in new[] { "css/fileserver.css", "css/github-markdown.min.css", "js/fileserver.js" })
         {
-            var response = await host.Client.GetAsync($"/docs/_fs/{version}/{asset}");
+            var response = await host.Client.GetAsync($"/docs/_fs/{version}/{asset}", Cancel);
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            Assert.NotEmpty(await response.Content.ReadAsStringAsync());
+            Assert.NotEmpty(await response.Content.ReadAsStringAsync(Cancel));
 
             // Content-addressed by the version segment, so it is safe to cache indefinitely —
             // and saying so is the difference between one fetch and one per navigation.
@@ -372,8 +374,8 @@ public sealed class MountRequestTests
 
         await using var host = await StartAsync(root);
 
-        var response = await host.Client.GetAsync("/docs");
-        var listing = await response.Content.ReadAsStringAsync();
+        var response = await host.Client.GetAsync("/docs", Cancel);
+        var listing = await response.Content.ReadAsStringAsync(Cancel);
 
         // The sibling proves the listing rendered; without it an empty or failed page would pass.
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -390,8 +392,8 @@ public sealed class MountRequestTests
 
         await using var host = await StartAsync(root);
 
-        var response = await host.Client.GetAsync("/docs");
-        var listing = await response.Content.ReadAsStringAsync();
+        var response = await host.Client.GetAsync("/docs", Cancel);
+        var listing = await response.Content.ReadAsStringAsync(Cancel);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("public-dir", listing, StringComparison.Ordinal);

@@ -42,8 +42,17 @@ found, which `repo-conventions` cannot see:
   Dockerfiles copy `NuGet.config` before the restore. Restored into empty package folders: the
   solution, the sample at its default `2026.9.2`, and the sample at a local-only
   `2026.9.25-local.t1733`. Both images build locally, `Dockerfile.bundle` with a throwaway
-  `FilesRoot/`, which settles the note above that its copy of the restore fix was unbuilt.
-- Still to do: xunit.v3 on Microsoft.Testing.Platform with `global.json`.
+  `FilesRoot/`, which settles the note above that its copy of the restore fix was unbuilt
+  (`1dcda1b`).
+- Tests run on xunit.v3 3.2.2 over Microsoft.Testing.Platform, with TrxReport 1.9.1; VSTest,
+  `xunit.runner.visualstudio` and coverlet are gone, and the project is an executable.
+  `global.json` is the template's (SDK 10.0.400, `latestFeature`, the platform as runner), and every
+  workflow's `setup-dotnet` reads it. v3 required a source-location constructor on the three skip
+  attributes and `TestContext.Current.CancellationToken` on 69 calls, threaded as each class's
+  `Cancel` as bbapi and bbweb do. 165 pass on Windows, none skipped; forcing `WindowsFact` to skip
+  reported 6 skipped and none failed, so the skip attributes still work under v3.
+  **WSL can no longer run the suite:** its SDK is Ubuntu's 10.0.112, below the pin, so a Linux run
+  there needs a 10.0.4xx SDK installed first. CI's Linux runners install from `global.json`.
 
 **The library is deliberately not marked trimmable.** Measured for step 7 of that plan: with its three
 `MapGet(string, Delegate)` calls moved to `RequestDelegate` handlers, the trim analyzer and an ILLink
