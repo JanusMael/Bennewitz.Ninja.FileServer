@@ -28,6 +28,11 @@
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
         <GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
+
+        <!-- Out of the family's solution-wide friend grants, which would give the CLI host this
+             library's internals: it must see only what a package consumer sees. The one grant
+             below, to the tests, stays this project's own. -->
+        <SolutionFriendGrants>false</SolutionFriendGrants>
     </PropertyGroup>
 
     <ItemGroup>
