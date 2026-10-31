@@ -64,6 +64,15 @@ found, which `repo-conventions` cannot see:
   the build, and passes it to the sample. nuget.org never has that version, so the restore can only
   succeed from the local feed. Rehearsed on Linux with an empty packages folder: the sample restored
   `2026.9.25-ci.r9999.a1`.
+- **Synced to Bennewitz.Ninja.Templates `2026.4.1031`** (#12), on 2026-10-31.
+  `scripts/repo-conventions.cs` and `scripts/assert-packages.cs` are that release's. The family's
+  friend grants: `AssemblyInfo.InternalsVisibleTo.cs`, written by `grants`, an empty `.External.cs`,
+  and a root `Directory.Build.targets` that links both and nothing else, since this repository maps
+  `PublicVersion` to `Version` rather than the template's way round. The library opts out with
+  `SolutionFriendGrants=false` and keeps its one grant, to the tests, so the CLI still sees only its
+  public API, as `AGENTS.md` now says. The tests move to xunit.v3 `4.0.2`, Templates' xunit part 2,
+  and TrxReport is gone: nothing passed `--report-trx`. The library stays not trimmable, which
+  passes while no project here sets a trimming property, as #12 said.
 
 **The library is deliberately not marked trimmable.** Measured for step 7 of that plan: with its three
 `MapGet(string, Delegate)` calls moved to `RequestDelegate` handlers, the trim analyzer and an ILLink
