@@ -73,6 +73,13 @@ found, which `repo-conventions` cannot see:
   public API, as `AGENTS.md` now says. The tests move to xunit.v3 `4.0.2`, Templates' xunit part 2,
   and TrxReport is gone: nothing passed `--report-trx`. The library stays not trimmable, which
   passes while no project here sets a trimming property, as #12 said.
+- **Synced to Bennewitz.Ninja.Templates `2026.4.1103`**, on 2026-11-03. `scripts/repo-conventions.cs`
+  is that release's, which also checks that markdown is checked out as LF; the root `.gitattributes`
+  already does. `Microsoft.VisualStudio.Threading.Analyzers` `18.12.1` is referenced privately from
+  the root `Directory.Build.props`, with only `VSTHRD101` and `VSTHRD110` on: the family's decision
+  of 2026-11-03. Neither reports anything here. Build, 165 of 165 tests, pack, `assert-packages`,
+  the sample against the local feed, the smoke test, and `check`, which conforms, pass on Windows.
+  The packed nuspec gains no dependency.
 
 **The library is deliberately not marked trimmable.** Measured for step 7 of that plan: with its three
 `MapGet(string, Delegate)` calls moved to `RequestDelegate` handlers, the trim analyzer and an ILLink

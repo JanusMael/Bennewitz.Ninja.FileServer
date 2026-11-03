@@ -1,7 +1,7 @@
 #!/usr/bin/env dotnet
 // Checks, and applies, the conventions every Bennewitz.Ninja repository carries: its GitHub
-// settings, the rulesets that gate `main` and the release tags, and the documentation at its root
-// and in every top-level directory. The convention itself is prescribed in the template
+// settings, the rulesets that gate `main` and the release tags, the documentation at its root and
+// in every top-level directory, and markdown checked out as LF. The convention itself is prescribed in the template
 // repository's docs/repository-conventions.md; this script is how it is enforced.
 //
 // ⭐ WHY A SCRIPT AND NOT THE TEMPLATE. GitHub keeps a repository's settings outside git, so neither
@@ -157,6 +157,7 @@ int Check()
         }
         CheckProjects(props: true);
         Drift.Check(tree, remoteTree, findings);
+        LineEndings.Check(tree, findings);
         return Report();
     }
 
@@ -213,6 +214,7 @@ int Check()
     Settings.Check(api, live, branch, admin, findings);
     CheckProjects(props: true);
     Drift.Check(tree, remoteTree, findings);
+    LineEndings.Check(tree, findings);
     return Report();
 }
 
@@ -2068,6 +2070,141 @@ static class Drift
     }
 
     private static string Normalize(string text) => text.Replace("\r\n", "\n", StringComparison.Ordinal);
+}
+
+/// <summary>
+/// Markdown is checked out with LF line endings on every machine. A Windows git with
+/// <c>core.autocrlf</c> true checks out CRLF unless <c>.gitattributes</c> says otherwise, and tools
+/// that hash, diff, match or edit these files by exact text, agents' among them, then see a
+/// <c>\r</c> the same file does not have on Linux or macOS.
+/// </summary>
+/// <remarks>
+/// ⚠ <b>The root <c>.gitattributes</c> is read as git reads it, for two probes</b>: a markdown file
+/// at the root and one in a directory, so a pattern anchored to the root alone does not pass. Later
+/// lines override earlier ones attribute by attribute: <c>*.md text</c> after
+/// <c>* text=auto eol=lf</c> keeps <c>eol=lf</c>, and <c>-text</c> or <c>binary</c> turns the
+/// conversion off. A <c>.gitattributes</c> in a subdirectory, and macros other than <c>binary</c>,
+/// are not read.
+/// </remarks>
+static class LineEndings
+{
+    private const string Attributes = ".gitattributes";
+    private const string Fix = "Add `* text=auto eol=lf`, as the template's .gitattributes has, or at least `*.md text eol=lf`.";
+    private static readonly string[] Probes = ["README.md", "docs/guide.md"];
+
+    public static void Check(Tree tree, List<Finding> findings)
+    {
+        string? text = tree.Read(Attributes);
+        if (text is null)
+        {
+            findings.Add(Finding.Fail("line-endings", $"{Attributes} is missing, so markdown is checked out as CRLF wherever git's core.autocrlf is true. {Fix}"));
+            return;
+        }
+
+        foreach (string probe in Probes)
+        {
+            (string? eol, bool binary) = Resolve(text, probe);
+            if (binary || eol != "lf")
+            {
+                string given = binary ? "no text conversion" : eol is null ? "no eol" : "eol=" + eol;
+                findings.Add(Finding.Fail("line-endings", $"{Attributes} gives {probe} {given}, so markdown is checked out as CRLF wherever git's core.autocrlf is true. {Fix}"));
+                return;
+            }
+        }
+    }
+
+    /// <summary>The <c>eol</c> value <paramref name="path"/> resolves to, and whether its text conversion is off.</summary>
+    public static (string? Eol, bool Binary) Resolve(string gitattributes, string path)
+    {
+        string? eol = null;
+        bool binary = false;
+
+        foreach (string raw in gitattributes.Split('\n'))
+        {
+            string line = raw.Trim();
+            if (line.Length == 0 || line.StartsWith('#') || line.StartsWith("[attr]", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            string[] parts = line.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+            if (!Matches(parts[0], path))
+            {
+                continue;
+            }
+
+            foreach (string attribute in parts.Skip(1))
+            {
+                switch (attribute)
+                {
+                    case "binary" or "-text":
+                        binary = true;
+                        break;
+                    case "text" or "!text" or "text=auto":
+                        binary = false;
+                        break;
+                    case "-eol" or "!eol":
+                        eol = null;
+                        break;
+                    default:
+                        if (attribute.StartsWith("eol=", StringComparison.Ordinal))
+                        {
+                            eol = attribute["eol=".Length..];
+                        }
+                        break;
+                }
+            }
+        }
+
+        return (eol, binary);
+    }
+
+    /// <summary>
+    /// Whether a .gitattributes pattern matches <paramref name="path"/>: a pattern with no slash
+    /// matches the file's name at any depth, one with a slash the path from the root.
+    /// </summary>
+    private static bool Matches(string pattern, string path)
+    {
+        string glob = pattern.TrimEnd('/');
+        bool anchored = glob.Contains('/');
+        string subject = anchored ? path : path[(path.LastIndexOf('/') + 1)..];
+        return Regex.IsMatch(subject, "^" + ToRegex(glob.TrimStart('/')) + "$");
+    }
+
+    private static string ToRegex(string glob)
+    {
+        StringBuilder regex = new();
+        for (int i = 0; i < glob.Length; i++)
+        {
+            char c = glob[i];
+            if (c == '*' && i + 1 < glob.Length && glob[i + 1] == '*')
+            {
+                bool slash = i + 2 < glob.Length && glob[i + 2] == '/';
+                regex.Append(slash ? "(.*/)?" : ".*");
+                i += slash ? 2 : 1;
+            }
+            else if (c == '*')
+            {
+                regex.Append("[^/]*");
+            }
+            else if (c == '?')
+            {
+                regex.Append("[^/]");
+            }
+            else if (c == '[' && glob.IndexOf(']', i + 1) is int close and > 0)
+            {
+                string set = glob[(i + 1)..close];
+                regex.Append('[').Append(set.StartsWith('!') ? "^" + set[1..] : set).Append(']');
+                i = close;
+            }
+            else
+            {
+                regex.Append(Regex.Escape(c.ToString()));
+            }
+        }
+
+        return regex.ToString();
+    }
 }
 
 /// <summary>The repository's files: a working tree, or the default branch read through the API.</summary>
