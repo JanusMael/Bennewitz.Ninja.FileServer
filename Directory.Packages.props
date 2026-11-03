@@ -13,6 +13,12 @@
     <PackageVersion Include="Microsoft.Extensions.FileProviders.Embedded" Version="10.0.8" />
   </ItemGroup>
 
+  <ItemGroup Label="Analysis">
+    <!-- Microsoft.VisualStudio.Threading.Analyzers, for two of its rules; Directory.Build.props
+         says which and turns the rest off. -->
+    <PackageVersion Include="Microsoft.VisualStudio.Threading.Analyzers" Version="18.12.1" />
+  </ItemGroup>
+
   <ItemGroup Label="Testing">
     <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.8" />
     <!-- xunit.v3 on Microsoft.Testing.Platform — see global.json. The VSTest bridge packages are

@@ -21,4 +21,22 @@
     <CommitSha Condition="'$(CommitSha)' == ''">$(GITHUB_SHA)</CommitSha>
   </PropertyGroup>
 
+  <!-- Microsoft.VisualStudio.Threading.Analyzers, for two rules alone, the maintainer's decision of
+       2026-11-03: VSTHRD101, an async lambda given where a void delegate is expected, which makes it
+       async void, and VSTHRD110, a task nobody awaits. The first ends the process on a throw and the
+       second loses the failure, as Inspections' docs/exception-resilience.md measured. The other
+       rules are about Visual Studio's JoinableTaskFactory, or style, and are off: measured on
+       DiffView, they found 49 sites and no defect. Private: nothing a package ships carries it. -->
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);VSTHRD001;VSTHRD002;VSTHRD003;VSTHRD004;VSTHRD010;VSTHRD011;VSTHRD012;VSTHRD013</NoWarn>
+    <NoWarn>$(NoWarn);VSTHRD100;VSTHRD102;VSTHRD103;VSTHRD104;VSTHRD105;VSTHRD106;VSTHRD107;VSTHRD108;VSTHRD109</NoWarn>
+    <NoWarn>$(NoWarn);VSTHRD111;VSTHRD112;VSTHRD113;VSTHRD114;VSTHRD115;VSTHRD116;VSTHRD117</NoWarn>
+    <NoWarn>$(NoWarn);VSTHRD200;VSTHRD201;VSTHRD202</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers"
+                      PrivateAssets="all"
+                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" />
+  </ItemGroup>
+
 </Project>
