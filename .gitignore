@@ -1,6 +1,7 @@
 # Build outputs
 **/bin/
 **/obj/
+packages/
 build.binlog
 
 # User-specific IDE files

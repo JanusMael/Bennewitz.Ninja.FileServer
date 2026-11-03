@@ -80,6 +80,9 @@ found, which `repo-conventions` cannot see:
   of 2026-11-03. Neither reports anything here. Build, 165 of 165 tests, pack, `assert-packages`,
   the sample against the local feed, the smoke test, and `check`, which conforms, pass on Windows.
   The packed nuspec gains no dependency.
+- **`.gitignore` ignores `packages/`**, as the template's does. CI packs into `./packages/Release`,
+  and a local run of the same step left a folder that `check` read as a top-level directory without
+  an `AGENTS.md`.
 
 **The library is deliberately not marked trimmable.** Measured for step 7 of that plan: with its three
 `MapGet(string, Delegate)` calls moved to `RequestDelegate` handlers, the trim analyzer and an ILLink
