@@ -83,6 +83,11 @@ found, which `repo-conventions` cannot see:
 - **`.gitignore` ignores `packages/`**, as the template's does. CI packs into `./packages/Release`,
   and a local run of the same step left a folder that `check` read as a top-level directory without
   an `AGENTS.md`.
+- **Synced to Bennewitz.Ninja.Templates `2026.4.1109`**, on 2026-11-09. The scripts were already that
+  release's; it moves the pins: AutoVersioning `2026.3.916` to `2026.4.1031`, whose diagnostics are
+  `BNAV00` to `BNAV04` from `2026.3.928` on, and xunit.v3 `4.0.2` to `4.0.3`. Build with warnings as
+  errors, 165 of 165 tests, pack, `assert-packages`, and `check`, which conforms, pass on Windows.
+  The package does not change.
 
 **The library is deliberately not marked trimmable.** Measured for step 7 of that plan: with its three
 `MapGet(string, Delegate)` calls moved to `RequestDelegate` handlers, the trim analyzer and an ILLink
