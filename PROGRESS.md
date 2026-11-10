@@ -26,9 +26,11 @@ From the Inspections consolidation (`plans/00009` in Bennewitz.Ninja.Templates),
   method returning `MarkdownPipeline` with a defaulted token failed BNAQ1001 and BNAQ1002.
 - `NuGet.config` is the template's again, with its warning about a subdirectory mapping a pattern
   to nuget.org.
-- **Waiting on the maintainer:** `scripts/release-target.cs` and its `YYYY.Q.MMDD` versions are not
-  adopted. This repository releases `vYYYY.M.D`, and a quarter-scheme version such as `2026.4.1110`
-  sorts below the published `2026.9.23`, so nuget.org would keep reporting 2026.9.23 as latest.
+- **Decided 2026-11-10: the version scheme changes at the first 2027 release.** Until then this
+  repository releases `vYYYY.M.D` and does not adopt `scripts/release-target.cs`: a quarter-scheme
+  version such as `2026.4.1110` sorts below the published `2026.9.23`, so nuget.org and every update
+  would keep treating 2026.9.23 as newest. The first release of 2027 adopts `release-target.cs`
+  and `YYYY.Q.MMDD` (`2027.1.MMDD`), which sorts above every earlier version.
 
 Separately, the departures from `templates/bbpkg` that the Templates session's audit of `7205fc5`
 found, which `repo-conventions` cannot see:
