@@ -16,6 +16,22 @@ properties. None changes what a user of the package or the server sees.
 - The `nuget` topic is required only where `packages.push` names an id: `scripts/repo-conventions.cs` is
   the template's current copy again (Templates `fb6961a`).
 
+From the Inspections consolidation (`plans/00009` in Bennewitz.Ninja.Templates), which
+`repo-conventions` does not check:
+
+- The tests reference `Bennewitz.Ninja.AssemblyQuality` `2026.4.1031`, the template's pin, and
+  `Architecture/AssemblyQualityTests` runs BNAQ1001, BNAQ1002, BNAQ1004 and BNAQ1005 over the compiled
+  library. It departs from the template's on purpose: BNAQ1002 names `Markdig` and `ColorCode`, which
+  the library references directly, so it inspects something and asserts it did. A planted public
+  method returning `MarkdownPipeline` with a defaulted token failed BNAQ1001 and BNAQ1002.
+- `NuGet.config` is the template's again, with its warning about a subdirectory mapping a pattern
+  to nuget.org.
+- **Decided 2026-11-10: the version scheme changes at the first 2027 release.** Until then this
+  repository releases `vYYYY.M.D` and does not adopt `scripts/release-target.cs`: a quarter-scheme
+  version such as `2026.4.1110` sorts below the published `2026.9.23`, so nuget.org and every update
+  would keep treating 2026.9.23 as newest. The first release of 2027 adopts `release-target.cs`
+  and `YYYY.Q.MMDD` (`2027.1.MMDD`), which sorts above every earlier version.
+
 Separately, the departures from `templates/bbpkg` that the Templates session's audit of `7205fc5`
 found, which `repo-conventions` cannot see:
 

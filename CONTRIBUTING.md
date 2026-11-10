@@ -76,7 +76,10 @@ the `Policy.IsRefused` check from `Handle` should turn `SensitivePathTests` red,
 `ExposedSensitivePatterns` case-insensitively should fail `Exposure_IsCaseSensitive`. Adding a
 project under `src/` that says nothing about `IsPackable` should fail
 `Every_packable_project_is_classified`, and a `*.nupkg` glob in `release.yml` should fail
-`The_release_workflow_globs_nothing_and_publishes_what_is_declared`. A test that
+`The_release_workflow_globs_nothing_and_publishes_what_is_declared`. A public library method that
+returns a Markdig type and defaults a `CancellationToken` should fail
+`BNAQ1002_no_leak_prone_type_appears_in_the_public_surface` and
+`BNAQ1001_no_public_method_takes_a_defaulted_cancellation_token`. A test that
 survives its own mutation is not protecting anything.
 
 ## Testing the package locally

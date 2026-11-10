@@ -25,6 +25,7 @@
          deliberately absent, and so is TrxReport: nothing asks for a .trx, and it would have to
          match the platform version xunit takes on every bump. -->
     <PackageVersion Include="xunit.v3" Version="4.0.3" />
+    <PackageVersion Include="Bennewitz.Ninja.AssemblyQuality" Version="2026.4.1031" />
   </ItemGroup>
 
   <!-- samples/SampleWebApp consumes this repository's own package at $(FileServerVersion): its
