@@ -15,5 +15,11 @@
     "conventions"
   ],
   "content": [],
-  "undocumented": {}
+  "undocumented": {},
+  "exempt": {
+    "release-target": {
+      "reason": "Releases are tagged vYYYY.M.D until the first release of 2027, the maintainer's decision: every 2026.Q.MMDD sorts below the published 2026.9.23, so release-target.cs, which computes that scheme, is adopted with the first release of 2027 (PROGRESS.md, AGENTS.md).",
+      "until": "2027-01-01"
+    }
+  }
 }

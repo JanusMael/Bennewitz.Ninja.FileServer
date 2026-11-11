@@ -1,7 +1,8 @@
 #!/usr/bin/env dotnet
 // Checks, and applies, the conventions every Bennewitz.Ninja repository carries: its GitHub
 // settings, the rulesets that gate `main` and the release tags, the documentation at its root and
-// in every top-level directory, and markdown checked out as LF. The convention itself is prescribed in the template
+// in every top-level directory, markdown checked out as LF, a release resolved through
+// release-target.cs, and the family's quality packages pinned. The convention itself is prescribed in the template
 // repository's docs/repository-conventions.md; this script is how it is enforced.
 //
 // ⭐ WHY A SCRIPT AND NOT THE TEMPLATE. GitHub keeps a repository's settings outside git, so neither
@@ -38,12 +39,15 @@
 // Exit codes: 0 conforms, 1 findings, 2 usage or an error that stopped the run.
 
 using System.Diagnostics;
+using System.Globalization;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+using System.Xml;
+using System.Xml.Linq;
 
 string? verb = args.Length > 0 ? args[0] : null;
 if (verb is not ("check" or "apply" or "grants"))
@@ -148,6 +152,8 @@ int Check()
     Documentation.Check(tree, config, findings);
     Families.CheckReadmes(tree, config, findings);
     Workflows.CheckPublishing(tree, findings);
+    ReleaseTarget.Check(tree, config, findings);
+    QualityPins.Check(tree, config, findings);
 
     if (offline)
     {
@@ -489,7 +495,8 @@ sealed record Config(
     IReadOnlyList<string> Content,
     IReadOnlyDictionary<string, string> Undocumented,
     IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> PropsExempt,
-    IReadOnlyDictionary<string, IReadOnlyList<string>>? Families)
+    IReadOnlyDictionary<string, IReadOnlyList<string>>? Families,
+    IReadOnlyDictionary<string, Exemption> Exempt)
 {
     // A family's stem becomes part of its tags, so it is what a ref name may hold, lower-cased.
     private static readonly Regex FamilyStem = new(@"^[a-z0-9]+(?:[._-][a-z0-9]+)*$");
@@ -539,6 +546,40 @@ sealed record Config(
             propsExempt[project] = exempt;
         }
 
+        // "exempt": { "<rule>": { "reason": "…", "until": "YYYY-MM-DD" } }: a whole rule set aside for
+        // this repository, with its reason, until the day given, if one is. Only Exemptions.Rules.
+        Dictionary<string, Exemption> exemptions = new(StringComparer.Ordinal);
+        foreach ((string rule, JsonNode? entry) in json["exempt"]?.AsObject() ?? [])
+        {
+            if (!Exemptions.Rules.Contains(rule, StringComparer.Ordinal))
+            {
+                findings.Add(Finding.Fail("repository.json", $"\"exempt\" names \"{rule}\", which no exemption covers; the rules it may set aside are {string.Join(", ", Exemptions.Rules)}."));
+                continue;
+            }
+            JsonObject? fields = entry as JsonObject;
+            string why = fields?["reason"] is JsonValue reason && reason.TryGetValue(out string? given) ? given.Trim() : "";
+            if (why.Length == 0)
+            {
+                findings.Add(Finding.Fail("repository.json", $"\"exempt\" sets \"{rule}\" aside without a reason: {{ \"reason\": \"…\" }}, with \"until\" when it is temporary."));
+                continue;
+            }
+            DateOnly? until = null;
+            if (fields!["until"] is { } bound)
+            {
+                if (bound is JsonValue value && value.TryGetValue(out string? day)
+                    && DateOnly.TryParseExact(day, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateOnly parsed))
+                {
+                    until = parsed;
+                }
+                else
+                {
+                    findings.Add(Finding.Fail("repository.json", $"\"exempt\"'s \"{rule}\" has \"until\" {bound.ToJsonString()}, which is not a date, YYYY-MM-DD."));
+                    continue;
+                }
+            }
+            exemptions[rule] = new Exemption(why, until);
+        }
+
         // Retired by plans/00008: a repository trims when its projects say so, and two sources of
         // truth could disagree. A NOTE, so a repository that still carries it does not go red.
         if (json.ContainsKey("trimming"))
@@ -557,7 +598,8 @@ sealed record Config(
             [.. Strings(json["content"]).Select(p => p.TrimEnd('/') + "/")],
             undocumented,
             propsExempt,
-            families);
+            families,
+            exemptions);
     }
 
     /// <summary>
@@ -2034,6 +2076,169 @@ static class Grants
     private static string Normalize(string text) => text.Replace("\r\n", "\n", StringComparison.Ordinal).TrimEnd('\n');
 
     private static string Text(JsonNode? node) => node is JsonValue value && value.TryGetValue(out string? text) ? text ?? "" : "";
+}
+
+/// <summary>
+/// A repository that publishes resolves every release through <c>scripts/release-target.cs</c>, as the
+/// template's <c>release.yml</c> does: the version, the family and the ids a tag publishes are read
+/// from the tag, <c>packages.push</c> and repository.json by that one script, never re-derived in a
+/// workflow's bash.
+/// </summary>
+/// <remarks>
+/// ⭐ <b>Why a rule</b> (the maintainer's decision of 2026-11-11). A sync takes the template's pins and
+/// never a file the template gained after a repository was generated, so AutoVersioning released for
+/// weeks without this script and nothing said so.
+/// ⚠ <b>The workflow is read line by line</b>: some line that is not a comment runs
+/// <c>scripts/release-target.cs -- resolve</c>, with or without <c>--file</c>.
+/// </remarks>
+static class ReleaseTarget
+{
+    private const string Script = "scripts/release-target.cs";
+    private const string Workflow = ".github/workflows/release.yml";
+    private static readonly Regex Resolves = new(@"scripts/release-target\.cs\s+--\s+resolve\b");
+
+    public static void Check(Tree tree, Config? config, List<Finding> findings)
+    {
+        if (!Baseline.Publishes(tree))
+        {
+            return;
+        }
+
+        List<Finding> found = [];
+        if (tree.Read(Script) is null)
+        {
+            found.Add(Finding.Fail("release", $"{Script} is missing. packages.push names an id, so every release resolves through it: copy templates/bbpkg/{Script} from Bennewitz.Ninja.Templates."));
+        }
+
+        string? workflow = tree.Read(Workflow);
+        if (workflow is null)
+        {
+            found.Add(Finding.Fail("release", $"{Workflow} is missing. packages.push names an id, so a release workflow publishes it, resolving through {Script} as the template's does."));
+        }
+        else if (!workflow.Split('\n').Any(line => !line.TrimStart().StartsWith('#') && Resolves.IsMatch(line)))
+        {
+            found.Add(Finding.Fail("release", $"{Workflow} does not resolve its release through {Script}: no step runs `{Script} -- resolve`, as the template's does."));
+        }
+
+        Exemptions.Report(config, Exemptions.ReleaseTarget, found, findings);
+    }
+}
+
+/// <summary>
+/// Every repository pins the family's quality packages in <c>Directory.Packages.props</c>, as every
+/// template does, and uses them there: AssemblyQuality's rules run in its tests.
+/// </summary>
+/// <remarks>
+/// <para>
+/// ⭐ <b>Why a rule</b> (the maintainer's decision of 2026-11-11): a sync that takes only the pins it
+/// finds never brings in a package the repository does not pin yet.
+/// </para>
+/// <para>
+/// ⓘ <b>A repository that publishes one of them is not asked to pin it</b>: it builds the package, and
+/// its tests take it by project. Inspections builds AssemblyQuality.
+/// </para>
+/// <para>
+/// ⚠ <b>Bennewitz.Ninja.CodeQuality joins <see cref="Required"/> once the family has adopted it</b>, at
+/// the sync after the release whose templates carry it; required sooner, it would fail every
+/// repository on the sync that brings in this rule.
+/// </para>
+/// </remarks>
+static class QualityPins
+{
+    private const string Props = "Directory.Packages.props";
+
+    public static readonly string[] Required = ["Bennewitz.Ninja.AssemblyQuality"];
+
+    public static void Check(Tree tree, Config? config, List<Finding> findings)
+    {
+        IReadOnlyList<string> pushed = Baseline.Pushed(tree);
+        string[] wanted = [.. Required.Where(id => !pushed.Contains(id, StringComparer.OrdinalIgnoreCase))];
+
+        List<Finding> found = [];
+        if (wanted.Length > 0)
+        {
+            string? text = tree.Read(Props);
+            if (text is null)
+            {
+                found.Add(Finding.Fail("quality", $"{Props} is missing, so nothing pins {string.Join(", ", wanted)}. Every repository manages its package versions centrally and pins the family's quality packages, as the templates do."));
+            }
+            else if (Pinned(text) is not { } pinned)
+            {
+                found.Add(Finding.Fail("quality", $"{Props} is not valid XML, so whether it pins {string.Join(", ", wanted)} cannot be read."));
+            }
+            else
+            {
+                foreach (string id in wanted.Where(id => !pinned.Contains(id)))
+                {
+                    found.Add(Finding.Fail("quality", $"{Props} does not pin {id}. Every repository pins the family's quality packages and uses them, as the templates do; a sync that takes only the pins it finds never brings one in."));
+                }
+            }
+        }
+
+        Exemptions.Report(config, Exemptions.QualityPins, found, findings);
+    }
+
+    /// <summary>The ids <c>&lt;PackageVersion Include="…"&gt;</c> pins, or null when the file is not XML. A comment pins nothing.</summary>
+    private static HashSet<string>? Pinned(string text)
+    {
+        try
+        {
+            return new HashSet<string>(
+                XDocument.Parse(text).Descendants()
+                    .Where(e => e.Name.LocalName == "PackageVersion")
+                    .Select(e => e.Attribute("Include")?.Value.Trim() ?? "")
+                    .Where(id => id.Length > 0),
+                StringComparer.OrdinalIgnoreCase);
+        }
+        catch (XmlException)
+        {
+            return null;
+        }
+    }
+}
+
+/// <summary>An exemption from a whole rule, <c>"exempt"</c> in repository.json: its reason, and the day it lapses, if any.</summary>
+sealed record Exemption(string Reason, DateOnly? Until);
+
+/// <summary>
+/// The rules repository.json's <c>"exempt"</c> may set aside, and how an exemption is reported.
+/// </summary>
+/// <remarks>
+/// ⚠ <b>An exemption is never silent.</b> While it holds, what the rule would have failed is a NOTE
+/// carrying the reason. Once <c>until</c> arrives the rule fails as if it were not there, and an
+/// exemption from a rule the repository now meets is a NOTE saying to remove it.
+/// </remarks>
+static class Exemptions
+{
+    public const string ReleaseTarget = "release-target";
+    public const string QualityPins = "quality-pins";
+
+    public static readonly string[] Rules = [ReleaseTarget, QualityPins];
+
+    public static void Report(Config? config, string rule, List<Finding> found, List<Finding> findings)
+    {
+        if (config?.Exempt.GetValueOrDefault(rule) is not { } exemption)
+        {
+            findings.AddRange(found);
+            return;
+        }
+
+        if (found.Count == 0)
+        {
+            findings.Add(Finding.Note("repository.json", $"\"exempt\" sets \"{rule}\" aside, but this repository meets it. Remove the exemption."));
+            return;
+        }
+
+        if (exemption.Until is { } until && DateOnly.FromDateTime(DateTime.UtcNow) >= until)
+        {
+            findings.AddRange(found);
+            findings.Add(Finding.Note("repository.json", $"The exemption from \"{rule}\" lapsed on {until:yyyy-MM-dd}: {exemption.Reason}"));
+            return;
+        }
+
+        string span = exemption.Until is { } day ? $" until {day:yyyy-MM-dd}" : "";
+        findings.Add(Finding.Note(rule, $"Exempt{span} by repository.json: {exemption.Reason} Otherwise: {string.Join(" ", found.Select(f => f.Message))}"));
+    }
 }
 
 static class Drift

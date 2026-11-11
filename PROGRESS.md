@@ -104,6 +104,17 @@ found, which `repo-conventions` cannot see:
   `BNAV00` to `BNAV04` from `2026.3.928` on, and xunit.v3 `4.0.2` to `4.0.3`. Build with warnings as
   errors, 165 of 165 tests, pack, `assert-packages`, and `check`, which conforms, pass on Windows.
   The package does not change.
+- **Synced to Bennewitz.Ninja.Templates `2026.4.1111`**, on 2026-11-11, on the maintainer's word.
+  - `scripts/repo-conventions.cs` is that release's. It fails a repository whose `packages.push`
+    names an id but whose release does not resolve through `scripts/release-target.cs`.
+  - That rule is set aside here by `"exempt"` in `.github/repository.json`, for the version-scheme
+    decision above. The exemption lapses on `2027-01-01`, and `check` then fails until
+    `release-target.cs` is adopted.
+  - `Bennewitz.Ninja.CodeQuality` `2026.4.1104` is referenced privately, every rule at its default,
+    and reports nothing here.
+  - Verified on Windows: build with warnings as errors, 169 of 169 tests, the sample built against
+    the packed package and its smoke test, pack, `assert-packages`, and `check`, which conforms. The
+    package does not change.
 
 **The library is deliberately not marked trimmable.** Measured for step 7 of that plan: with its three
 `MapGet(string, Delegate)` calls moved to `RequestDelegate` handlers, the trim analyzer and an ILLink
