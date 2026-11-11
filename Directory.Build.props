@@ -39,4 +39,18 @@
                       IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" />
   </ItemGroup>
 
+  <!-- Bennewitz.Ninja.CodeQuality, every rule at its default, the maintainer's decision of
+       2026-11-10: the source-side twin of the AssemblyQuality tests. Its rules report while the code
+       is written what AssemblyQuality finds after the build, and the shapes Inspections'
+       docs/exception-resilience.md measured to end the process or fail silently: a timer, thread or
+       watcher callback outside a try/catch, a gate released outside a finally, an async lambda an Rx
+       operator never awaits. Each rule is inert where what it reads is out of reach. A finding that
+       cannot throw on real input is suppressed where it stands, with the reason. Private: nothing a
+       package ships carries it. -->
+  <ItemGroup>
+    <PackageReference Include="Bennewitz.Ninja.CodeQuality"
+                      PrivateAssets="all"
+                      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" />
+  </ItemGroup>
+
 </Project>

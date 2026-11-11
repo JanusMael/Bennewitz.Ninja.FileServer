@@ -17,6 +17,9 @@
     <!-- Microsoft.VisualStudio.Threading.Analyzers, for two of its rules; Directory.Build.props
          says which and turns the rest off. -->
     <PackageVersion Include="Microsoft.VisualStudio.Threading.Analyzers" Version="18.12.1" />
+    <!-- Bennewitz.Ninja.CodeQuality, every rule at its default; Directory.Build.props says why. A
+         move here can bring new rules, so a raise is built before it lands. -->
+    <PackageVersion Include="Bennewitz.Ninja.CodeQuality" Version="2026.4.1104" />
   </ItemGroup>
 
   <ItemGroup Label="Testing">
