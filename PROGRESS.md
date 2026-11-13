@@ -115,6 +115,16 @@ found, which `repo-conventions` cannot see:
   - Verified on Windows: build with warnings as errors, 169 of 169 tests, the sample built against
     the packed package and its smoke test, pack, `assert-packages`, and `check`, which conforms. The
     package does not change.
+- **Synced to Bennewitz.Ninja.Templates `2026.4.1113`**, on 2026-11-13, on the maintainer's word.
+  - `scripts/repo-conventions.cs` is that release's: `QualityPins.Required` names
+    `Bennewitz.Ninja.CodeQuality` beside AssemblyQuality, and MSBuild's `-getProperty` JSON is read
+    from the first `{` to the last `}`. `scripts/assert-packages.cs` was already that release's.
+  - `Bennewitz.Ninja.CodeQuality` `2026.4.1104` to `2026.4.1111`, which reports nothing here.
+  - That release's `release-target.cs` floor and its doc lines are not taken: this repository has no
+    `release-target.cs` until the first release of 2027 (the exemption above).
+  - Verified on Windows: build with warnings as errors, 169 of 169 tests, the sample built against
+    the packed package and its smoke test, pack, `assert-packages`, and `check`, which conforms. The
+    container image is left to CI. The package does not change.
 
 **The library is deliberately not marked trimmable.** Measured for step 7 of that plan: with its three
 `MapGet(string, Delegate)` calls moved to `RequestDelegate` handlers, the trim analyzer and an ILLink
