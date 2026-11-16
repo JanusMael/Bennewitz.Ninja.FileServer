@@ -4,8 +4,10 @@
 
 **Decided 2026-11-16: release now, as `v2026.11.16`.** It ships the ReadyToRun fix and is the first
 tag through the named-package release steps, so those are exercised before the 2027 scheme change
-rather than alongside it. Once it is live on nuget.org, the sample's `FileServerVersion` moves to
-`2026.11.16`.
+rather than alongside it. Released from `b146367`: the preflight and CI were green first, every
+release step succeeded, the GitHub Release carries the `.nupkg` and the six named archives, and
+nuget.org listed `2026.11.16` at 17:14Z, twelve minutes after the push. The sample, built from an
+empty package folder, restored it from nuget.org, and `/files` served a listing.
 
 Build and CI changes from `plans/00004` in Bennewitz.Ninja.Templates, the family's standard build
 properties. None changes what a user of the package or the server sees.
@@ -76,9 +78,8 @@ found, which `repo-conventions` cannot see:
   WSL's Ubuntu SDK (10.0.112) is below the pin, so WSL now has 10.0.401 from `dotnet-install.sh`
   in `~/.dotnet`, first on `PATH` through `~/.profile`. On Linux (ext4) the suite runs 158 passed,
   7 skipped (the Windows-only tests), 0 failed.
-- The sample's `FileServerVersion` default is `2026.9.23`, the current release, per
-  CONTRIBUTING's release step 4. Built with an empty packages folder, it restored `2026.9.23` and
-  `/files` served a listing (`81aad4e`).
+- The sample's `FileServerVersion` default is `2026.11.16`, the current release, per
+  CONTRIBUTING's release step 4, moved once nuget.org listed it.
 - CI's sample step builds against the package the run just packed. It had passed no
   `FileServerVersion`, so it restored the published release from nuget.org, as its comment said it
   did not. `build` now sets a run-unique `PublicVersion`, `YYYY.M.D-ci.r<run>.a<attempt>`, before
