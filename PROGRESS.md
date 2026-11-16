@@ -1,6 +1,11 @@
 # Progress
 
-## On `main`, not yet released
+## Released in 2026.11.16
+
+**Decided 2026-11-16: release now, as `v2026.11.16`.** It ships the ReadyToRun fix and is the first
+tag through the named-package release steps, so those are exercised before the 2027 scheme change
+rather than alongside it. Once it is live on nuget.org, the sample's `FileServerVersion` moves to
+`2026.11.16`.
 
 Build and CI changes from `plans/00004` in Bennewitz.Ninja.Templates, the family's standard build
 properties. None changes what a user of the package or the server sees.

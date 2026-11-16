@@ -9,6 +9,10 @@ Versions follow a `YYYY.M.D` calendar scheme.
 
 ## [Unreleased]
 
+---
+
+## [2026.11.16] — 2026-11-16
+
 ### Fixed
 - The standalone binaries are now compiled ReadyToRun, as the publish script always intended. It passed `ReadyToRun=true`, which is not an SDK property and was silently ignored, so every release up to 2026.9.23 shipped without ReadyToRun code; the property is `PublishReadyToRun`. The binaries are larger for it: the `win-x64` executable grows from 104.5 MB to 124.3 MB.
 
@@ -97,7 +101,8 @@ Versions follow a `YYYY.M.D` calendar scheme.
 - `settings.json.example` shipped alongside each binary as a configuration starter.
 - CI workflow (build on push/PR to `main`) and release workflow (publish all RIDs + GitHub Release on `v*` tag).
 
-[Unreleased]: https://github.com/JanusMael/Bennewitz.Ninja.FileServer/compare/v2026.9.23...HEAD
+[Unreleased]: https://github.com/JanusMael/Bennewitz.Ninja.FileServer/compare/v2026.11.16...HEAD
+[2026.11.16]: https://github.com/JanusMael/Bennewitz.Ninja.FileServer/compare/v2026.9.23...v2026.11.16
 [2026.9.23]: https://github.com/JanusMael/Bennewitz.Ninja.FileServer/compare/v2026.9.2...v2026.9.23
 [2026.9.2]: https://github.com/JanusMael/Bennewitz.Ninja.FileServer/compare/v2026.8.19...v2026.9.2
 [2026.8.19]: https://github.com/JanusMael/Bennewitz.Ninja.FileServer/compare/v2026.8.18...v2026.8.19
