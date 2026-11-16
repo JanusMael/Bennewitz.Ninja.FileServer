@@ -125,6 +125,15 @@ found, which `repo-conventions` cannot see:
   - Verified on Windows: build with warnings as errors, 169 of 169 tests, the sample built against
     the packed package and its smoke test, pack, `assert-packages`, and `check`, which conforms. The
     container image is left to CI. The package does not change.
+- **Synced to Bennewitz.Ninja.Templates `2026.4.1114`**, on 2026-11-16, on the maintainer's word.
+  - `Bennewitz.Ninja.CodeQuality` `2026.4.1111` to `2026.4.1113`, whose BNCQ1009 and BNCQ3001 now
+    follow a delegate held in a local to its body. It reports nothing here. No other pin moves.
+  - `scripts/repo-conventions.cs` and `scripts/assert-packages.cs` were already that release's.
+  - That release's `publishing.md` lines on the version floor are not taken: this repository has
+    no `docs/publishing.md`, and no `release-target.cs` until the first release of 2027.
+  - Verified on Windows: build with warnings as errors, 169 of 169 tests, the sample built against
+    the packed package and its smoke test, pack, `assert-packages`, and `check`, which conforms. The
+    container image is left to CI. The package does not change.
 
 **The library is deliberately not marked trimmable.** Measured for step 7 of that plan: with its three
 `MapGet(string, Delegate)` calls moved to `RequestDelegate` handlers, the trim analyzer and an ILLink
